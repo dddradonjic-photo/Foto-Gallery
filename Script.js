@@ -1,5 +1,5 @@
 const photos = [
-  "OVDE_NALEPI_LINK_SA_CLOUDINARYJA"
+  "https://res.cloudinary.com/zcvep3xs/image/upload/f_auto,q_auto/IMG_2331"
 ];
 
 const gallery = document.getElementById("gallery");
