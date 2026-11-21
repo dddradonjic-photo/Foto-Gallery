@@ -7,7 +7,7 @@
 body {
   background: #ffffff;
   color: #111111;
-  padding: 32px 16px 80px;
+  padding: 40px 18px 96px;
 }
 
 #gallery {
@@ -15,11 +15,71 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 52px;
 }
 
-#gallery img {
+.photo-item {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.photo-item img {
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* Vodoravne (landscape) fotografije — lepo se uklapaju bez kropovanja */
+.is-wide {
+  max-width: 100%;
+}
+
+.is-medium {
+  max-width: 780px;
+}
+
+.is-shift-left {
+  max-width: 760px;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.is-shift-right {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Vertikalne (portrait) fotografije — uže da ne budu ogromne na ekranu */
+.is-tall-center {
+  max-width: 480px;
+}
+
+.is-tall-left {
+  max-width: 480px;
+  margin-left: 10%;
+  margin-right: auto;
+}
+
+.is-tall-right {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: 10%;
+}
+
+@media (max-width: 640px) {
+  #gallery {
+    gap: 36px;
+  }
+
+  .is-wide,
+  .is-medium,
+  .is-shift-left,
+  .is-shift-right,
+  .is-tall-center,
+  .is-tall-left,
+  .is-tall-right {
+    max-width: 100%;
+    margin: 0 auto;
+  }
 }
