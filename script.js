@@ -65,6 +65,17 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000066.jpg
 
 // Ovde nalepi linkove za B&W (crno-bele) fotografije — svaki u novi red.
 const rawBWLinks = `
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000003.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000046.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299860/000006.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299860/000013.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299862/000035.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299862/000033.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299863/000036.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299862/000031.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000040.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000037.jpg
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000038.jpg
 `;
 
 const LAYOUT_CONFIG = {
