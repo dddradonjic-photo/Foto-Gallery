@@ -378,11 +378,7 @@ function renderContact(container) {
   container.style.display = "block";
   container.innerHTML = `
     <section class="contact-section">
-      <div class="contact-header">
-        <p class="contact-name">${SITE_CONFIG.name}</p>
-        <p class="contact-role">${SITE_CONFIG.subtitle}</p>
-        <p class="contact-location">${SITE_CONFIG.location}</p>
-      </div>
+      <p class="contact-location">${SITE_CONFIG.location}</p>
 
       <ul class="contact-list">
         <li>
@@ -399,38 +395,7 @@ function renderContact(container) {
             href="${SITE_CONFIG.instagramUrl}"
             target="_blank"
             rel="noopener noreferrer"
-            class="instagram-link"
-          >
-            <svg
-              class="instagram-icon"
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              aria-hidden="true"
-            >
-              <rect
-                x="2.5"
-                y="2.5"
-                width="19"
-                height="19"
-                rx="5"
-                ry="5"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              />
-              <circle
-                cx="12"
-                cy="12"
-                r="4.2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              />
-              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
-            </svg>
-            <span>${SITE_CONFIG.instagramHandle}</span>
-          </a>
+          >${SITE_CONFIG.instagramHandle}</a>
         </li>
       </ul>
     </section>
