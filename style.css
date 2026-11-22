@@ -151,37 +151,19 @@ body {
 
 /* CONTACT sekcija */
 .contact-section {
+  width: 100%;
   max-width: 560px;
-  margin: 36px auto 0;
-  padding: 12px 0;
+  margin: 24px 0 0;
+  padding: 8px 0;
   font-size: 14px;
   line-height: 1.65;
   color: #111111;
 }
 
-.contact-header {
-  margin-bottom: 24px;
-}
-
-.contact-name {
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.contact-role {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #666666;
-  margin-top: 2px;
-}
-
 .contact-location {
-  font-size: 13px;
-  color: #444444;
-  margin-top: 8px;
+  font-size: 14px;
+  color: #222222;
+  margin-bottom: 20px;
 }
 
 .contact-list {
@@ -214,27 +196,6 @@ body {
 
 .contact-list a:hover {
   border-bottom-color: #111111;
-}
-
-.instagram-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.instagram-icon {
-  flex-shrink: 0;
-  display: block;
-}
-
-.contact-section p + p {
-  margin-top: 10px;
-}
-
-.contact-section a {
-  color: #111111;
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* Lightbox (uvećanje fotografije) */
