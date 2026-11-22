@@ -1,6 +1,6 @@
 const SITE_CONFIG = {
   name: "David Radonjić",
-  subtitle: "Photography",
+  subtitle: "Analog Photography",
   email: "radonjicdavid1@gmail.com",
   homePhoto: "https://res.cloudinary.com/zcvep3xs/image/upload/v1795351910/received_493916864107740.jpg"
 };
