@@ -1,7 +1,13 @@
 const photos = [
-  "OVDE_NALEPI_PRVI_LINK_SA_CLOUDINARYJA",
-  "OVDE_NALEPI_DRUGI_LINK_SA_CLOUDINARYJA",
-  "OVDE_NALEPI_TRECI_LINK_SA_CLOUDINARYJA"
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_2.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_28.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_8.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_3.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300413/B_34.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300412/B_1.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_20.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_25.jpg",
+  "https://res.cloudinary.com/zcvep3xs/image/upload/v1795300397/B_16.jpg"
 ];
 
 // Nasumično meša redosled fotografija (Fisher–Yates)
