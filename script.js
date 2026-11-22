@@ -13,10 +13,13 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795300397/B_16.jpg
 `;
 
 const MOSAIC_CONFIG = {
-  gap: 8,                 // mali razmak između fotografija u pikselima (smanji na 4–6 za još gušći mozaik)
-  targetRowHeight: 230, // osnovna visina reda na desktopu (manja vrednost = više slika po redu)
-  minItemsPerRow: 3,    // najmanje slika u punom redu
-  maxItemsPerRow: 6     // najviše slika u punom redu
+  gap: 6,                 // usklađeno sa gap u style.css
+  mobileGap: 4,           // razmak na ekranima do 640px
+  desktopRowHeight: 215,  // visina reda na velikim ekranima (više fotografija u redu)
+  tabletRowHeight: 175,   // visina reda na manjim ekranima / tabletima
+  mobileRowHeight: 115,   // kompaktna visina reda na telefonu
+  minItemsPerRow: 3,
+  maxItemsPerRow: 6
 };
 
 function buildPhotoList(rawText) {
@@ -39,35 +42,49 @@ function shuffleArray(arr) {
 
 const gallery = document.getElementById("gallery");
 const photos = shuffleArray(buildPhotoList(rawPhotoLinks));
-
-// Čuva prirodan odnos stranica čim se učita
 const ratioMap = new Map();
+
+function isMobileViewport() {
+  return window.innerWidth <= 640;
+}
+
+function getCurrentGap() {
+  return isMobileViewport() ? MOSAIC_CONFIG.mobileGap : MOSAIC_CONFIG.gap;
+}
 
 function getRowHeightTarget() {
   const w = window.innerWidth;
-  if (w < 600) return 135;
-  if (w < 1024) return 185;
-  return MOSAIC_CONFIG.targetRowHeight;
+  if (w <= 640) return MOSAIC_CONFIG.mobileRowHeight;
+  if (w < 1100) return MOSAIC_CONFIG.tabletRowHeight;
+  return MOSAIC_CONFIG.desktopRowHeight;
+}
+
+function getMaxItemsInRow() {
+  return isMobileViewport() ? 3 : MOSAIC_CONFIG.maxItemsPerRow;
 }
 
 function buildRows(items, containerWidth) {
   const rows = [];
   let currentRow = [];
   let ratioSum = 0;
+  const gap = getCurrentGap();
   const targetHeight = getRowHeightTarget();
-  const maxWidthForTarget = containerWidth * 1.12;
+  const maxItems = getMaxItemsInRow();
+  const maxWidthForTarget = containerWidth * (isMobileViewport() ? 1.05 : 1.15);
 
   items.forEach((item, index) => {
-    // Povremeno (otprilike na svakoj 5. slici) dajemo malo veći "tezinski" udeo da bude dinamičnije
-    const boost = index % 5 === 2 ? 1.25 : 1;
+    // Blaga dinamična razlika u veličini (poneka fotka malo veća, ali bez preteranog širenja)
+    const boost = !isMobileViewport() && index % 6 === 3 ? 1.18 : 1;
     const effectiveRatio = item.ratio * boost;
 
     currentRow.push({ ...item, effectiveRatio });
     ratioSum += effectiveRatio;
 
-    const estimatedWidthAtTarget = ratioSum * targetHeight + (currentRow.length - 1) * MOSAIC_CONFIG.gap;
-    const reachedMaxCount = currentRow.length >= MOSAIC_CONFIG.maxItemsPerRow;
-    const hasEnoughItems = currentRow.length >= MOSAIC_CONFIG.minItemsPerRow;
+    const estimatedWidthAtTarget =
+      ratioSum * targetHeight + (currentRow.length - 1) * gap;
+    const reachedMaxCount = currentRow.length >= maxItems;
+    const hasEnoughItems =
+      currentRow.length >= (isMobileViewport() ? 2 : MOSAIC_CONFIG.minItemsPerRow);
 
     if (reachedMaxCount || (hasEnoughItems && estimatedWidthAtTarget >= maxWidthForTarget)) {
       rows.push({ items: currentRow, isLastRow: false });
@@ -86,31 +103,31 @@ function buildRows(items, containerWidth) {
 function renderMosaic(items) {
   if (!gallery || !items.length) return;
 
-  const containerWidth = gallery.clientWidth || window.innerWidth - 32;
+  const gap = getCurrentGap();
+  const containerWidth = gallery.getBoundingClientRect().width || window.innerWidth;
   const rows = buildRows(items, containerWidth);
   const targetHeight = getRowHeightTarget();
 
   gallery.innerHTML = "";
   gallery.style.display = "flex";
   gallery.style.flexDirection = "column";
-  gallery.style.gap = `${MOSAIC_CONFIG.gap}px`;
+  gallery.style.gap = `${gap}px`;
 
   rows.forEach((row) => {
     const rowEl = document.createElement("div");
     rowEl.className = "mosaic-row";
     rowEl.style.display = "flex";
-    rowEl.style.gap = `${MOSAIC_CONFIG.gap}px`;
+    rowEl.style.gap = `${gap}px`;
     rowEl.style.alignItems = "stretch";
 
-    const totalGaps = (row.items.length - 1) * MOSAIC_CONFIG.gap;
+    const totalGaps = (row.items.length - 1) * gap;
     const availableWidth = Math.max(containerWidth - totalGaps, 100);
     const sumRatios = row.items.reduce((acc, el) => acc + el.effectiveRatio, 0);
 
-    // Punimo ceo red da nema velike praznine na desnoj strani (osim ako je poslednji red baš kratak)
     const idealHeight = availableWidth / sumRatios;
     const rowHeight = row.isLastRow
-      ? Math.min(idealHeight, targetHeight * 1.15)
-      : Math.max(Math.min(idealHeight, targetHeight * 1.45), targetHeight * 0.72);
+      ? Math.min(idealHeight, targetHeight * 1.1)
+      : Math.max(Math.min(idealHeight, targetHeight * 1.35), targetHeight * 0.75);
 
     row.items.forEach((entry) => {
       const figure = document.createElement("figure");
@@ -147,7 +164,6 @@ function renderMosaic(items) {
 function initGallery() {
   if (!gallery || !photos.length) return;
 
-  // Učitavamo dimenzije svih slika da mozaik odmah zna tačne proporcije bez "skakanja"
   const loadPromises = photos.map((url) => {
     return new Promise((resolve) => {
       const probe = new Image();
