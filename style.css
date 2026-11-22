@@ -4,24 +4,30 @@
   padding: 0;
 }
 
+html,
 body {
+  width: 100%;
+  overflow-x: hidden;
   background: #ffffff;
   color: #111111;
-  padding: 16px 12px 48px;
+}
+
+body {
+  padding: 6px;
 }
 
 #gallery {
   width: 100%;
-  max-width: 1440px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mosaic-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: stretch;
   width: 100%;
 }
@@ -45,13 +51,18 @@ body {
   display: block;
 }
 
+/* Prilagođavanje za telefon */
 @media (max-width: 640px) {
   body {
-    padding: 10px 8px 32px;
+    padding: 4px;
   }
 
   #gallery,
   .mosaic-row {
-    gap: 6px;
+    gap: 4px;
+  }
+
+  .photo-item:hover {
+    transform: none;
   }
 }
