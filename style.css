@@ -7,79 +7,51 @@
 body {
   background: #ffffff;
   color: #111111;
-  padding: 40px 18px 96px;
+  padding: 16px 12px 48px;
 }
 
 #gallery {
-  max-width: 960px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 52px;
+  gap: 8px;
+}
+
+.mosaic-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
 }
 
 .photo-item {
-  width: 100%;
-  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: #f5f5f5;
+  transition: transform 0.25s ease;
+}
+
+.photo-item:hover {
+  transform: scale(1.01);
+  z-index: 2;
 }
 
 .photo-item img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-/* Vodoravne (landscape) fotografije — lepo se uklapaju bez kropovanja */
-.is-wide {
-  max-width: 100%;
-}
-
-.is-medium {
-  max-width: 780px;
-}
-
-.is-shift-left {
-  max-width: 760px;
-  margin-left: 0;
-  margin-right: auto;
-}
-
-.is-shift-right {
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: 0;
-}
-
-/* Vertikalne (portrait) fotografije — uže da ne budu ogromne na ekranu */
-.is-tall-center {
-  max-width: 480px;
-}
-
-.is-tall-left {
-  max-width: 480px;
-  margin-left: 10%;
-  margin-right: auto;
-}
-
-.is-tall-right {
-  max-width: 480px;
-  margin-left: auto;
-  margin-right: 10%;
-}
-
 @media (max-width: 640px) {
-  #gallery {
-    gap: 36px;
+  body {
+    padding: 10px 8px 32px;
   }
 
-  .is-wide,
-  .is-medium,
-  .is-shift-left,
-  .is-shift-right,
-  .is-tall-center,
-  .is-tall-left,
-  .is-tall-right {
-    max-width: 100%;
-    margin: 0 auto;
+  #gallery,
+  .mosaic-row {
+    gap: 6px;
   }
 }
