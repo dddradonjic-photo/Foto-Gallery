@@ -12,12 +12,17 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_25.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795300397/B_16.jpg
 `;
 
+const SITE_INFO = {
+  name: "David Radonjić",
+  email: "radonjicdavid1@gmail.com"
+};
+
 const MOSAIC_CONFIG = {
-  gap: 6,                 // usklađeno sa gap u style.css
-  mobileGap: 4,           // razmak na ekranima do 640px
-  desktopRowHeight: 215,  // visina reda na velikim ekranima (više fotografija u redu)
-  tabletRowHeight: 175,   // visina reda na manjim ekranima / tabletima
-  mobileRowHeight: 115,   // kompaktna visina reda na telefonu
+  gap: 6,
+  mobileGap: 4,
+  desktopRowHeight: 215,
+  tabletRowHeight: 175,
+  mobileRowHeight: 115,
   minItemsPerRow: 3,
   maxItemsPerRow: 6
 };
@@ -38,6 +43,93 @@ function shuffleArray(arr) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function renderTopHeader() {
+  if (document.getElementById("site-header")) return;
+
+  const header = document.createElement("header");
+  header.id = "site-header";
+  header.className = "site-header";
+
+  const left = document.createElement("div");
+  left.className = "header-left";
+
+  const mailLink = document.createElement("a");
+  mailLink.href = `mailto:${SITE_INFO.email}`;
+  mailLink.textContent = SITE_INFO.email;
+  mailLink.className = "header-email";
+  left.appendChild(mailLink);
+
+  const center = document.createElement("div");
+  center.className = "header-center";
+  center.textContent = SITE_INFO.name;
+
+  const right = document.createElement("div");
+  right.className = "header-right";
+
+  header.appendChild(left);
+  header.appendChild(center);
+  header.appendChild(right);
+
+  document.body.prepend(header);
+}
+
+let lightboxEl = null;
+let lightboxImg = null;
+
+function createLightbox() {
+  if (lightboxEl) return;
+
+  lightboxEl = document.createElement("div");
+  lightboxEl.id = "photo-lightbox";
+  lightboxEl.className = "lightbox-backdrop";
+  lightboxEl.setAttribute("aria-hidden", "true");
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "lightbox-close";
+  closeBtn.setAttribute("aria-label", "Zatvori fotografiju");
+  closeBtn.innerHTML = "&times;";
+  closeBtn.addEventListener("click", closeLightbox);
+
+  lightboxImg = document.createElement("img");
+  lightboxImg.className = "lightbox-image";
+  lightboxImg.alt = "Uvećana fotografija";
+
+  // Sprečava zatvaranje kad se klikne direktno na samu sliku; klik sa strane zatvara
+  lightboxImg.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Klik bilo gde po tamnoj pozadini sa strane vraća na glavnu stranicu
+  lightboxEl.addEventListener("click", closeLightbox);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && lightboxEl.classList.contains("is-open")) {
+      closeLightbox();
+    }
+  });
+
+  lightboxEl.appendChild(closeBtn);
+  lightboxEl.appendChild(lightboxImg);
+  document.body.appendChild(lightboxEl);
+}
+
+function openLightbox(url) {
+  createLightbox();
+  lightboxImg.src = url;
+  lightboxEl.classList.add("is-open");
+  lightboxEl.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  if (!lightboxEl) return;
+  lightboxEl.classList.remove("is-open");
+  lightboxEl.setAttribute("aria-hidden", "true");
+  document.body.style.overflowX = "hidden";
+  document.body.style.overflowY = "";
 }
 
 const gallery = document.getElementById("gallery");
@@ -73,7 +165,6 @@ function buildRows(items, containerWidth) {
   const maxWidthForTarget = containerWidth * (isMobileViewport() ? 1.05 : 1.15);
 
   items.forEach((item, index) => {
-    // Blaga dinamična razlika u veličini (poneka fotka malo veća, ali bez preteranog širenja)
     const boost = !isMobileViewport() && index % 6 === 3 ? 1.18 : 1;
     const effectiveRatio = item.ratio * boost;
 
@@ -153,6 +244,8 @@ function renderMosaic(items) {
       img.style.objectFit = "cover";
       img.style.display = "block";
 
+      figure.addEventListener("click", () => openLightbox(entry.url));
+
       figure.appendChild(img);
       rowEl.appendChild(figure);
     });
@@ -162,6 +255,9 @@ function renderMosaic(items) {
 }
 
 function initGallery() {
+  renderTopHeader();
+  createLightbox();
+
   if (!gallery || !photos.length) return;
 
   const loadPromises = photos.map((url) => {
