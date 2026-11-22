@@ -2,6 +2,11 @@ const SITE_CONFIG = {
   name: "David Radonjić",
   subtitle: "Analog Photography",
   email: "radonjicdavid1@gmail.com",
+  phone: "+381606795566",
+  phoneDisplay: "+381 60 679 5566",
+  location: "Belgrade, Serbia",
+  instagramHandle: "@davidradonjic1",
+  instagramUrl: "https://www.instagram.com/davidradonjic1/",
   homePhoto: "https://res.cloudinary.com/zcvep3xs/image/upload/v1795351910/received_493916864107740.jpg"
 };
 
@@ -373,8 +378,61 @@ function renderContact(container) {
   container.style.display = "block";
   container.innerHTML = `
     <section class="contact-section">
-      <p><strong>${SITE_CONFIG.name}</strong> — ${SITE_CONFIG.subtitle}</p>
-      <p>Email: <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a></p>
+      <div class="contact-header">
+        <p class="contact-name">${SITE_CONFIG.name}</p>
+        <p class="contact-role">${SITE_CONFIG.subtitle}</p>
+        <p class="contact-location">${SITE_CONFIG.location}</p>
+      </div>
+
+      <ul class="contact-list">
+        <li>
+          <span class="contact-label">Email</span>
+          <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a>
+        </li>
+        <li>
+          <span class="contact-label">Phone</span>
+          <a href="tel:${SITE_CONFIG.phone}">${SITE_CONFIG.phoneDisplay}</a>
+        </li>
+        <li>
+          <span class="contact-label">Instagram</span>
+          <a
+            href="${SITE_CONFIG.instagramUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="instagram-link"
+          >
+            <svg
+              class="instagram-icon"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              aria-hidden="true"
+            >
+              <rect
+                x="2.5"
+                y="2.5"
+                width="19"
+                height="19"
+                rx="5"
+                ry="5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="4.2"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
+            </svg>
+            <span>${SITE_CONFIG.instagramHandle}</span>
+          </a>
+        </li>
+      </ul>
     </section>
   `;
 }
