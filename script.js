@@ -10,7 +10,11 @@ const SITE_CONFIG = {
   homePhoto: "https://res.cloudinary.com/zcvep3xs/image/upload/v1795351910/received_493916864107740.jpg"
 };
 
-// Ovde nalepi linkove za COLOR fotografije — svaki u novi red (bez navodnika i zareza).
+// KAKO SE DODAJU KATEGORIJE:
+// Pored linka (posle jednog razmaka) dopiši: people, places ili fragments
+// Primer: https://res.cloudinary.com/.../slika.jpg people
+// Ako ne dopišeš ništa pored linka, slika se svakako vidi u ALL.
+
 const rawColorLinks = `
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_2.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_28.jpg
@@ -63,7 +67,6 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000056.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000066.jpg
 `;
 
-// Ovde nalepi linkove za B&W (crno-bele) fotografije — svaki u novi red.
 const rawBWLinks = `
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000003.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000046.jpg
@@ -79,15 +82,13 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000038.jpg
 `;
 
 // Poseban slot za PORTFOLIO (murale i naručene radove) — punimo u sledećem koraku.
-const PORTFOLIO_ITEMS = [
-  // Primer strukture za kasnije:
-  // {
-  //   title: "Naziv murala ili rada",
-  //   year: "2026",
-  //   location: "Beograd",
-  //   description: "Kratak opis rada ili narudžbine.",
-  //   image: "https://..."
-  // }
+const PORTFOLIO_ITEMS = [];
+
+const PHOTO_CATEGORIES = [
+  { id: "all", label: "ALL" },
+  { id: "people", label: "PEOPLE" },
+  { id: "places", label: "PLACES" },
+  { id: "fragments", label: "FRAGMENTS" }
 ];
 
 const LAYOUT_CONFIG = {
@@ -101,13 +102,27 @@ const LAYOUT_CONFIG = {
   maxItemsMobile: 2
 };
 
-function buildPhotoList(rawText) {
-  const cleaned = rawText
-    .split(/\r?\n/)
-    .map((line) => line.trim().replace(/^["']|["'],?$/g, ""))
-    .filter((line) => line.startsWith("http://") || line.startsWith("https://"));
+function parsePhotoEntries(rawText) {
+  const seen = new Set();
+  const entries = [];
 
-  return [...new Set(cleaned)];
+  rawText.split(/\r?\n/).forEach((line) => {
+    const cleaned = line.trim().replace(/^["']|["'],?$/g, "");
+    if (!cleaned) return;
+
+    const parts = cleaned.split(/\s+/);
+    const url = parts[0];
+    if (!url.startsWith("http://") && !url.startsWith("https://")) return;
+    if (seen.has(url)) return;
+    seen.add(url);
+
+    const rawTag = (parts[1] || "").toLowerCase();
+    const category = ["people", "places", "fragments"].includes(rawTag) ? rawTag : "uncategorized";
+
+    entries.push({ url, category });
+  });
+
+  return entries;
 }
 
 function shuffleArray(arr) {
@@ -174,6 +189,8 @@ function closeLightbox() {
 
 // Header i navigacija
 let currentSection = "home";
+let currentCategory = "all";
+let currentSectionEntries = [];
 let currentOrderedItems = [];
 let isPhotoMenuOpen = false;
 let photoGroupEl = null;
@@ -248,7 +265,7 @@ function renderHeaderAndShell() {
     navButtons.set("home", homeBtn);
     nav.appendChild(homeBtn);
 
-    // 2. PORTFOLIO (poseban slot)
+    // 2. PORTFOLIO
     const portfolioBtn = document.createElement("button");
     portfolioBtn.type = "button";
     portfolioBtn.className = "nav-link";
@@ -260,7 +277,7 @@ function renderHeaderAndShell() {
     navButtons.set("portfolio", portfolioBtn);
     nav.appendChild(portfolioBtn);
 
-    // 3. PHOTOGRAPHY (razvija se na Color i B&W)
+    // 3. PHOTOGRAPHY (razvija se na COLOR i B&W)
     photoGroupEl = document.createElement("div");
     photoGroupEl.className = "nav-group";
     photoGroupEl.addEventListener("mouseenter", () => {
@@ -429,15 +446,51 @@ function buildRows(items, containerWidth, settings) {
   return rows;
 }
 
+function buildFilterBar(container) {
+  const bar = document.createElement("div");
+  bar.className = "category-filter-bar";
+  bar.setAttribute("role", "tablist");
+  bar.setAttribute("aria-label", "Filter kategorija fotografija");
+
+  PHOTO_CATEGORIES.forEach(({ id, label }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "category-chip";
+    if (currentCategory === id) {
+      btn.classList.add("is-active");
+    }
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      if (currentCategory === id) return;
+      currentCategory = id;
+      applyCategoryFilter(container);
+    });
+    bar.appendChild(btn);
+  });
+
+  return bar;
+}
+
 function renderMosaic(container, items) {
   const settings = getViewportSettings();
   const containerWidth = container.getBoundingClientRect().width || window.innerWidth - 64;
-  const rows = buildRows(items, containerWidth, settings);
 
   container.innerHTML = "";
   container.style.display = "flex";
   container.style.flexDirection = "column";
   container.style.gap = `${settings.gap}px`;
+
+  container.appendChild(buildFilterBar(container));
+
+  if (!items.length) {
+    const emptyMsg = document.createElement("p");
+    emptyMsg.className = "category-empty-msg";
+    emptyMsg.textContent = "Još uvek nema označenih fotografija u ovoj kategoriji.";
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const rows = buildRows(items, containerWidth, settings);
 
   rows.forEach((row) => {
     const rowEl = document.createElement("div");
@@ -478,6 +531,16 @@ function renderMosaic(container, items) {
 
     container.appendChild(rowEl);
   });
+}
+
+function applyCategoryFilter(container) {
+  const filteredEntries =
+    currentCategory === "all"
+      ? currentSectionEntries
+      : currentSectionEntries.filter((entry) => entry.category === currentCategory);
+
+  currentOrderedItems = filteredEntries.map((entry) => ratioCache.get(entry.url));
+  renderMosaic(container, currentOrderedItems);
 }
 
 function renderHome(container) {
@@ -566,8 +629,8 @@ function renderContact(container) {
   `;
 }
 
-function loadDimensionsAndRender(container, urls) {
-  if (!urls.length) {
+function loadDimensionsAndRender(container, entries) {
+  if (!entries.length) {
     container.style.display = "block";
     container.innerHTML = `
       <section class="contact-section">
@@ -577,36 +640,37 @@ function loadDimensionsAndRender(container, urls) {
     return;
   }
 
-  const shuffledUrls = shuffleArray(urls);
-  const promises = shuffledUrls.map((url) => {
-    if (ratioCache.has(url)) return Promise.resolve();
+  const shuffledEntries = shuffleArray(entries);
+  const promises = shuffledEntries.map((entry) => {
+    if (ratioCache.has(entry.url)) return Promise.resolve();
 
     return new Promise((resolve) => {
       const probe = new Image();
       probe.onload = () => {
         const w = probe.naturalWidth || 4;
         const h = probe.naturalHeight || 3;
-        ratioCache.set(url, { url, ratio: w / h, naturalWidth: w, naturalHeight: h });
+        ratioCache.set(entry.url, { url: entry.url, ratio: w / h, naturalWidth: w, naturalHeight: h });
         resolve();
       };
       probe.onerror = () => {
-        ratioCache.set(url, { url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
+        ratioCache.set(entry.url, { url: entry.url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
         resolve();
       };
-      probe.src = url;
+      probe.src = entry.url;
     });
   });
 
   Promise.all(promises).then(() => {
-    currentOrderedItems = shuffledUrls.map((url) => ratioCache.get(url));
+    currentSectionEntries = shuffledEntries;
     if (currentSection === "color" || currentSection === "bw") {
-      renderMosaic(container, currentOrderedItems);
+      applyCategoryFilter(container);
     }
   });
 }
 
 function navigateTo(section) {
   currentSection = section;
+  currentCategory = "all";
   setActiveNav(section);
   const container = renderHeaderAndShell();
 
@@ -615,9 +679,9 @@ function navigateTo(section) {
   } else if (section === "portfolio") {
     renderPortfolio(container);
   } else if (section === "color") {
-    loadDimensionsAndRender(container, buildPhotoList(rawColorLinks));
+    loadDimensionsAndRender(container, parsePhotoEntries(rawColorLinks));
   } else if (section === "bw") {
-    loadDimensionsAndRender(container, buildPhotoList(rawBWLinks));
+    loadDimensionsAndRender(container, parsePhotoEntries(rawBWLinks));
   } else if (section === "contact") {
     renderContact(container);
   }
