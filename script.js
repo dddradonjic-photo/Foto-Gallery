@@ -78,13 +78,25 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000037.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000038.jpg
 `;
 
+// Poseban slot za PORTFOLIO (murale i naručene radove) — punimo u sledećem koraku.
+const PORTFOLIO_ITEMS = [
+  // Primer strukture za kasnije:
+  // {
+  //   title: "Naziv murala ili rada",
+  //   year: "2026",
+  //   location: "Beograd",
+  //   description: "Kratak opis rada ili narudžbine.",
+  //   image: "https://..."
+  // }
+];
+
 const LAYOUT_CONFIG = {
-  gap: 22,                // veći razmak / belina na desktopu
-  mobileGap: 12,          // razmak na telefonu
-  desktopRowHeight: 270,  // veće slike na desktopu da se lepo vide
+  gap: 22,
+  mobileGap: 12,
+  desktopRowHeight: 270,
   tabletRowHeight: 215,
   mobileRowHeight: 145,
-  maxItemsDesktop: 4,     // maksimalno 4 fotografije u jednom redu na desktopu
+  maxItemsDesktop: 4,
   maxItemsTablet: 3,
   maxItemsMobile: 2
 };
@@ -163,13 +175,34 @@ function closeLightbox() {
 // Header i navigacija
 let currentSection = "home";
 let currentOrderedItems = [];
+let isPhotoMenuOpen = false;
+let photoGroupEl = null;
+let photoToggleBtn = null;
 const ratioCache = new Map();
 const navButtons = new Map();
+
+function setPhotoMenuOpen(open) {
+  isPhotoMenuOpen = open;
+  if (photoGroupEl) {
+    photoGroupEl.classList.toggle("is-open", open);
+  }
+  if (photoToggleBtn) {
+    photoToggleBtn.setAttribute("aria-expanded", String(open));
+  }
+}
 
 function setActiveNav(section) {
   navButtons.forEach((btn, key) => {
     btn.classList.toggle("is-active", key === section);
   });
+
+  const isPhotoSub = section === "color" || section === "bw";
+  if (photoToggleBtn) {
+    photoToggleBtn.classList.toggle("is-active", isPhotoSub || isPhotoMenuOpen);
+  }
+  if (isPhotoSub) {
+    setPhotoMenuOpen(true);
+  }
 }
 
 function renderHeaderAndShell() {
@@ -188,6 +221,7 @@ function renderHeaderAndShell() {
     titleLink.textContent = SITE_CONFIG.name;
     titleLink.addEventListener("click", (e) => {
       e.preventDefault();
+      setPhotoMenuOpen(false);
       navigateTo("home");
     });
 
@@ -202,283 +236,25 @@ function renderHeaderAndShell() {
     nav.className = "site-nav";
     nav.setAttribute("aria-label", "Glavna navigacija");
 
-    const sections = [
-      { id: "home", label: "HOME" },
-      { id: "color", label: "COLOR" },
-      { id: "bw", label: "B&W" },
-      { id: "contact", label: "CONTACT" }
-    ];
-
-    sections.forEach(({ id, label }) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "nav-link";
-      btn.textContent = label;
-      btn.addEventListener("click", () => navigateTo(id));
-      navButtons.set(id, btn);
-      nav.appendChild(btn);
+    // 1. HOME
+    const homeBtn = document.createElement("button");
+    homeBtn.type = "button";
+    homeBtn.className = "nav-link";
+    homeBtn.textContent = "HOME";
+    homeBtn.addEventListener("click", () => {
+      setPhotoMenuOpen(false);
+      navigateTo("home");
     });
+    navButtons.set("home", homeBtn);
+    nav.appendChild(homeBtn);
 
-    header.appendChild(brandBlock);
-    header.appendChild(nav);
-    document.body.prepend(header);
-  }
-
-  let galleryContainer = document.getElementById("gallery");
-  if (!galleryContainer) {
-    galleryContainer = document.createElement("main");
-    galleryContainer.id = "gallery";
-    galleryContainer.className = "page-content";
-    document.body.appendChild(galleryContainer);
-  } else {
-    galleryContainer.classList.add("page-content");
-  }
-
-  return galleryContainer;
-}
-
-function getViewportSettings() {
-  const w = window.innerWidth;
-  if (w <= 768) {
-    return {
-      gap: LAYOUT_CONFIG.mobileGap,
-      rowHeight: LAYOUT_CONFIG.mobileRowHeight,
-      maxItems: LAYOUT_CONFIG.maxItemsMobile,
-      maxPortraitInRow: 2,
-      maxLandscapeInRow: 2
-    };
-  }
-  if (w < 1100) {
-    return {
-      gap: LAYOUT_CONFIG.gap,
-      rowHeight: LAYOUT_CONFIG.tabletRowHeight,
-      maxItems: LAYOUT_CONFIG.maxItemsTablet,
-      maxPortraitInRow: 3,
-      maxLandscapeInRow: 2
-    };
-  }
-  return {
-    gap: LAYOUT_CONFIG.gap,
-    rowHeight: LAYOUT_CONFIG.desktopRowHeight,
-    maxItems: LAYOUT_CONFIG.maxItemsDesktop,
-    maxPortraitInRow: 4, // max 4 u redu; uspravne ograničavamo na 3 u redu kad je gusto
-    maxLandscapeInRow: 2 // najviše 2 horizontalne u redu da ostanu krupnije
-  };
-}
-
-function buildRows(items, containerWidth, settings) {
-  const rows = [];
-  let currentRow = [];
-  let ratioSum = 0;
-  let portraitCount = 0;
-  let landscapeCount = 0;
-
-  items.forEach((item, index) => {
-    const isPortrait = item.naturalHeight > item.naturalWidth;
-    const nextPortraitCount = portraitCount + (isPortrait ? 1 : 0);
-    const nextLandscapeCount = landscapeCount + (!isPortrait ? 1 : 0);
-
-    // Ako bi sledeća slika probila limit uspravnih/horizontalnih u redu i red već ima makar 1 fotku, zatvori red
-    const exceedsTypeLimit =
-      currentRow.length >= 1 &&
-      ((isPortrait && nextPortraitCount > Math.min(3, settings.maxPortraitInRow)) ||
-        (!isPortrait && nextLandscapeCount > settings.maxLandscapeInRow));
-
-    const boost = index % 5 === 2 ? 1.18 : 1;
-    const effectiveRatio = item.ratio * boost;
-    const nextRatioSum = ratioSum + effectiveRatio;
-    const nextCount = currentRow.length + 1;
-    const estimatedWidth =
-      nextRatioSum * settings.rowHeight + (nextCount - 1) * settings.gap;
-
-    const wouldExceedMaxCount = nextCount > settings.maxItems;
-    const reachedFullRow =
-      currentRow.length >= 2 && estimatedWidth >= containerWidth * 1.08;
-
-    if (currentRow.length > 0 && (exceedsTypeLimit || wouldExceedMaxCount || reachedFullRow)) {
-      rows.push({ items: currentRow, isLastRow: false });
-      currentRow = [];
-      ratioSum = 0;
-      portraitCount = 0;
-      landscapeCount = 0;
-    }
-
-    const finalBoost = index % 5 === 2 ? 1.18 : 1;
-    const finalRatio = item.ratio * finalBoost;
-    currentRow.push({ ...item, effectiveRatio: finalRatio, isPortrait });
-    ratioSum += finalRatio;
-    if (isPortrait) portraitCount += 1;
-    else landscapeCount += 1;
-  });
-
-  if (currentRow.length > 0) {
-    rows.push({ items: currentRow, isLastRow: true });
-  }
-
-  return rows;
-}
-
-function renderMosaic(container, items) {
-  const settings = getViewportSettings();
-  const containerWidth = container.getBoundingClientRect().width || window.innerWidth - 64;
-  const rows = buildRows(items, containerWidth, settings);
-
-  container.innerHTML = "";
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.gap = `${settings.gap}px`;
-
-  rows.forEach((row) => {
-    const rowEl = document.createElement("div");
-    rowEl.className = "mosaic-row";
-    rowEl.style.display = "flex";
-    rowEl.style.gap = `${settings.gap}px`;
-    rowEl.style.alignItems = "stretch";
-
-    const totalGaps = (row.items.length - 1) * settings.gap;
-    const availableWidth = Math.max(containerWidth - totalGaps, 120);
-    const sumRatios = row.items.reduce((acc, el) => acc + el.effectiveRatio, 0);
-
-    const idealHeight = availableWidth / sumRatios;
-    const rowHeight = row.isLastRow
-      ? Math.min(idealHeight, settings.rowHeight * 1.08)
-      : Math.max(Math.min(idealHeight, settings.rowHeight * 1.3), settings.rowHeight * 0.8);
-
-    row.items.forEach((entry) => {
-      const figure = document.createElement("figure");
-      figure.className = "photo-item";
-      figure.classList.add(entry.isPortrait ? "is-portrait" : "is-landscape");
-
-      const width = Math.round(rowHeight * entry.effectiveRatio);
-      const height = Math.round(rowHeight);
-
-      figure.style.flex = row.isLastRow ? "0 0 auto" : `${entry.effectiveRatio} 0 0`;
-      figure.style.width = `${width}px`;
-      figure.style.height = `${height}px`;
-
-      const img = document.createElement("img");
-      img.src = entry.url;
-      img.alt = "Fotografija";
-
-      figure.addEventListener("click", () => openLightbox(entry.url));
-      figure.appendChild(img);
-      rowEl.appendChild(figure);
+    // 2. PORTFOLIO (poseban slot)
+    const portfolioBtn = document.createElement("button");
+    portfolioBtn.type = "button";
+    portfolioBtn.className = "nav-link";
+    portfolioBtn.textContent = "PORTFOLIO";
+    portfolioBtn.addEventListener("click", () => {
+      setPhotoMenuOpen(false);
+      navigateTo("portfolio");
     });
-
-    container.appendChild(rowEl);
-  });
-}
-
-function renderHome(container) {
-  container.style.display = "block";
-  container.innerHTML = `
-    <section class="home-hero">
-      <figure class="home-hero-figure" id="home-hero-trigger">
-        <img src="${SITE_CONFIG.homePhoto}" alt="${SITE_CONFIG.name} — naslovna fotografija" />
-      </figure>
-    </section>
-  `;
-
-  const trigger = document.getElementById("home-hero-trigger");
-  if (trigger) {
-    trigger.addEventListener("click", () => openLightbox(SITE_CONFIG.homePhoto));
-  }
-}
-
-function renderContact(container) {
-  container.style.display = "block";
-  container.innerHTML = `
-    <section class="contact-section">
-      <p class="contact-location">${SITE_CONFIG.location}</p>
-
-      <ul class="contact-list">
-        <li>
-          <span class="contact-label">Email</span>
-          <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a>
-        </li>
-        <li>
-          <span class="contact-label">Phone</span>
-          <a href="tel:${SITE_CONFIG.phone}">${SITE_CONFIG.phoneDisplay}</a>
-        </li>
-        <li>
-          <span class="contact-label">Instagram</span>
-          <a
-            href="${SITE_CONFIG.instagramUrl}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >${SITE_CONFIG.instagramHandle}</a>
-        </li>
-      </ul>
-    </section>
-  `;
-}
-
-function loadDimensionsAndRender(container, urls) {
-  if (!urls.length) {
-    container.style.display = "block";
-    container.innerHTML = `
-      <section class="contact-section">
-        <p>Još uvek nema dodatih fotografija u ovoj sekciji.</p>
-      </section>
-    `;
-    return;
-  }
-
-  const shuffledUrls = shuffleArray(urls);
-  const promises = shuffledUrls.map((url) => {
-    if (ratioCache.has(url)) return Promise.resolve();
-
-    return new Promise((resolve) => {
-      const probe = new Image();
-      probe.onload = () => {
-        const w = probe.naturalWidth || 4;
-        const h = probe.naturalHeight || 3;
-        ratioCache.set(url, { url, ratio: w / h, naturalWidth: w, naturalHeight: h });
-        resolve();
-      };
-      probe.onerror = () => {
-        ratioCache.set(url, { url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
-        resolve();
-      };
-      probe.src = url;
-    });
-  });
-
-  Promise.all(promises).then(() => {
-    currentOrderedItems = shuffledUrls.map((url) => ratioCache.get(url));
-    if (currentSection === "color" || currentSection === "bw") {
-      renderMosaic(container, currentOrderedItems);
-    }
-  });
-}
-
-function navigateTo(section) {
-  currentSection = section;
-  setActiveNav(section);
-  const container = renderHeaderAndShell();
-
-  if (section === "home") {
-    renderHome(container);
-  } else if (section === "color") {
-    loadDimensionsAndRender(container, buildPhotoList(rawColorLinks));
-  } else if (section === "bw") {
-    loadDimensionsAndRender(container, buildPhotoList(rawBWLinks));
-  } else if (section === "contact") {
-    renderContact(container);
-  }
-}
-
-createLightbox();
-navigateTo("home");
-
-let resizeTimer;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    const container = document.getElementById("gallery");
-    if (!container) return;
-    if ((currentSection === "color" || currentSection === "bw") && currentOrderedItems.length) {
-      renderMosaic(container, currentOrderedItems);
-    }
-  }, 120);
-});
+    nav
