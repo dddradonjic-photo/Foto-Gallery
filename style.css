@@ -17,7 +17,7 @@ body {
   padding: 28px 32px 72px;
 }
 
-/* Gornji header kao na referentnom portfolio sajtu */
+/* Gornji header */
 .site-header {
   max-width: 1320px;
   margin: 0 auto 36px;
@@ -106,6 +106,42 @@ body {
   text-underline-offset: 5px;
 }
 
+/* Filter traka za PEOPLE / PLACES / FRAGMENTS */
+.category-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.category-chip {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #888888;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.category-chip:hover,
+.category-chip.is-active {
+  color: #111111;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.category-empty-msg {
+  font-size: 13px;
+  color: #666666;
+  padding: 12px 0;
+}
+
 /* Glavni prostor stranice */
 .page-content {
   width: 100%;
@@ -113,7 +149,7 @@ body {
   margin: 0 auto;
 }
 
-/* Početna (HOME) — velika uvodna fotografija */
+/* Početna (HOME) */
 .home-hero {
   width: 100%;
   max-width: 980px;
@@ -210,7 +246,7 @@ body {
   color: #333333;
 }
 
-/* Mozaik galerija za COLOR i B&W sa većom belinom i max 4 slike u redu */
+/* Mozaik galerija za COLOR i B&W */
 #gallery {
   width: 100%;
   display: flex;
@@ -294,7 +330,7 @@ body {
   border-bottom-color: #111111;
 }
 
-/* Lightbox (uvećanje fotografije) */
+/* Lightbox */
 .lightbox-backdrop {
   position: fixed;
   inset: 0;
@@ -365,6 +401,10 @@ body {
 
   .nav-submenu {
     padding-left: 10px;
+  }
+
+  .category-filter-bar {
+    gap: 14px;
   }
 
   #gallery,
