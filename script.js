@@ -257,4 +257,383 @@ function renderHeaderAndShell() {
       setPhotoMenuOpen(false);
       navigateTo("portfolio");
     });
-    nav
+    navButtons.set("portfolio", portfolioBtn);
+    nav.appendChild(portfolioBtn);
+
+    // 3. PHOTOGRAPHY (razvija se na Color i B&W)
+    photoGroupEl = document.createElement("div");
+    photoGroupEl.className = "nav-group";
+    photoGroupEl.addEventListener("mouseenter", () => {
+      if (window.innerWidth > 768) {
+        setPhotoMenuOpen(true);
+      }
+    });
+    photoGroupEl.addEventListener("mouseleave", () => {
+      if (window.innerWidth > 768 && currentSection !== "color" && currentSection !== "bw") {
+        setPhotoMenuOpen(false);
+      }
+    });
+
+    photoToggleBtn = document.createElement("button");
+    photoToggleBtn.type = "button";
+    photoToggleBtn.className = "nav-link nav-parent";
+    photoToggleBtn.textContent = "PHOTOGRAPHY";
+    photoToggleBtn.setAttribute("aria-expanded", "false");
+    photoToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const nextState = !isPhotoMenuOpen;
+      setPhotoMenuOpen(nextState);
+      if (nextState && currentSection !== "color" && currentSection !== "bw") {
+        navigateTo("color");
+      }
+    });
+
+    const subMenu = document.createElement("div");
+    subMenu.className = "nav-submenu";
+
+    const colorBtn = document.createElement("button");
+    colorBtn.type = "button";
+    colorBtn.className = "nav-link nav-sublink";
+    colorBtn.textContent = "COLOR";
+    colorBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setPhotoMenuOpen(true);
+      navigateTo("color");
+    });
+    navButtons.set("color", colorBtn);
+
+    const bwBtn = document.createElement("button");
+    bwBtn.type = "button";
+    bwBtn.className = "nav-link nav-sublink";
+    bwBtn.textContent = "B&W";
+    bwBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setPhotoMenuOpen(true);
+      navigateTo("bw");
+    });
+    navButtons.set("bw", bwBtn);
+
+    subMenu.appendChild(colorBtn);
+    subMenu.appendChild(bwBtn);
+    photoGroupEl.appendChild(photoToggleBtn);
+    photoGroupEl.appendChild(subMenu);
+    nav.appendChild(photoGroupEl);
+
+    // 4. CONTACT
+    const contactBtn = document.createElement("button");
+    contactBtn.type = "button";
+    contactBtn.className = "nav-link";
+    contactBtn.textContent = "CONTACT";
+    contactBtn.addEventListener("click", () => {
+      setPhotoMenuOpen(false);
+      navigateTo("contact");
+    });
+    navButtons.set("contact", contactBtn);
+    nav.appendChild(contactBtn);
+
+    header.appendChild(brandBlock);
+    header.appendChild(nav);
+    document.body.prepend(header);
+  }
+
+  let galleryContainer = document.getElementById("gallery");
+  if (!galleryContainer) {
+    galleryContainer = document.createElement("main");
+    galleryContainer.id = "gallery";
+    galleryContainer.className = "page-content";
+    document.body.appendChild(galleryContainer);
+  } else {
+    galleryContainer.classList.add("page-content");
+  }
+
+  return galleryContainer;
+}
+
+function getViewportSettings() {
+  const w = window.innerWidth;
+  if (w <= 768) {
+    return {
+      gap: LAYOUT_CONFIG.mobileGap,
+      rowHeight: LAYOUT_CONFIG.mobileRowHeight,
+      maxItems: LAYOUT_CONFIG.maxItemsMobile,
+      maxPortraitInRow: 2,
+      maxLandscapeInRow: 2
+    };
+  }
+  if (w < 1100) {
+    return {
+      gap: LAYOUT_CONFIG.gap,
+      rowHeight: LAYOUT_CONFIG.tabletRowHeight,
+      maxItems: LAYOUT_CONFIG.maxItemsTablet,
+      maxPortraitInRow: 3,
+      maxLandscapeInRow: 2
+    };
+  }
+  return {
+    gap: LAYOUT_CONFIG.gap,
+    rowHeight: LAYOUT_CONFIG.desktopRowHeight,
+    maxItems: LAYOUT_CONFIG.maxItemsDesktop,
+    maxPortraitInRow: 4,
+    maxLandscapeInRow: 2
+  };
+}
+
+function buildRows(items, containerWidth, settings) {
+  const rows = [];
+  let currentRow = [];
+  let ratioSum = 0;
+  let portraitCount = 0;
+  let landscapeCount = 0;
+
+  items.forEach((item, index) => {
+    const isPortrait = item.naturalHeight > item.naturalWidth;
+    const nextPortraitCount = portraitCount + (isPortrait ? 1 : 0);
+    const nextLandscapeCount = landscapeCount + (!isPortrait ? 1 : 0);
+
+    const exceedsTypeLimit =
+      currentRow.length >= 1 &&
+      ((isPortrait && nextPortraitCount > Math.min(3, settings.maxPortraitInRow)) ||
+        (!isPortrait && nextLandscapeCount > settings.maxLandscapeInRow));
+
+    const boost = index % 5 === 2 ? 1.18 : 1;
+    const effectiveRatio = item.ratio * boost;
+    const nextRatioSum = ratioSum + effectiveRatio;
+    const nextCount = currentRow.length + 1;
+    const estimatedWidth =
+      nextRatioSum * settings.rowHeight + (nextCount - 1) * settings.gap;
+
+    const wouldExceedMaxCount = nextCount > settings.maxItems;
+    const reachedFullRow =
+      currentRow.length >= 2 && estimatedWidth >= containerWidth * 1.08;
+
+    if (currentRow.length > 0 && (exceedsTypeLimit || wouldExceedMaxCount || reachedFullRow)) {
+      rows.push({ items: currentRow, isLastRow: false });
+      currentRow = [];
+      ratioSum = 0;
+      portraitCount = 0;
+      landscapeCount = 0;
+    }
+
+    const finalBoost = index % 5 === 2 ? 1.18 : 1;
+    const finalRatio = item.ratio * finalBoost;
+    currentRow.push({ ...item, effectiveRatio: finalRatio, isPortrait });
+    ratioSum += finalRatio;
+    if (isPortrait) portraitCount += 1;
+    else landscapeCount += 1;
+  });
+
+  if (currentRow.length > 0) {
+    rows.push({ items: currentRow, isLastRow: true });
+  }
+
+  return rows;
+}
+
+function renderMosaic(container, items) {
+  const settings = getViewportSettings();
+  const containerWidth = container.getBoundingClientRect().width || window.innerWidth - 64;
+  const rows = buildRows(items, containerWidth, settings);
+
+  container.innerHTML = "";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = `${settings.gap}px`;
+
+  rows.forEach((row) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = "mosaic-row";
+    rowEl.style.display = "flex";
+    rowEl.style.gap = `${settings.gap}px`;
+    rowEl.style.alignItems = "stretch";
+
+    const totalGaps = (row.items.length - 1) * settings.gap;
+    const availableWidth = Math.max(containerWidth - totalGaps, 120);
+    const sumRatios = row.items.reduce((acc, el) => acc + el.effectiveRatio, 0);
+
+    const idealHeight = availableWidth / sumRatios;
+    const rowHeight = row.isLastRow
+      ? Math.min(idealHeight, settings.rowHeight * 1.08)
+      : Math.max(Math.min(idealHeight, settings.rowHeight * 1.3), settings.rowHeight * 0.8);
+
+    row.items.forEach((entry) => {
+      const figure = document.createElement("figure");
+      figure.className = "photo-item";
+      figure.classList.add(entry.isPortrait ? "is-portrait" : "is-landscape");
+
+      const width = Math.round(rowHeight * entry.effectiveRatio);
+      const height = Math.round(rowHeight);
+
+      figure.style.flex = row.isLastRow ? "0 0 auto" : `${entry.effectiveRatio} 0 0`;
+      figure.style.width = `${width}px`;
+      figure.style.height = `${height}px`;
+
+      const img = document.createElement("img");
+      img.src = entry.url;
+      img.alt = "Fotografija";
+
+      figure.addEventListener("click", () => openLightbox(entry.url));
+      figure.appendChild(img);
+      rowEl.appendChild(figure);
+    });
+
+    container.appendChild(rowEl);
+  });
+}
+
+function renderHome(container) {
+  container.style.display = "block";
+  container.innerHTML = `
+    <section class="home-hero">
+      <figure class="home-hero-figure" id="home-hero-trigger">
+        <img src="${SITE_CONFIG.homePhoto}" alt="${SITE_CONFIG.name} — naslovna fotografija" />
+      </figure>
+    </section>
+  `;
+
+  const trigger = document.getElementById("home-hero-trigger");
+  if (trigger) {
+    trigger.addEventListener("click", () => openLightbox(SITE_CONFIG.homePhoto));
+  }
+}
+
+function renderPortfolio(container) {
+  container.style.display = "block";
+
+  if (!PORTFOLIO_ITEMS.length) {
+    container.innerHTML = `
+      <section class="portfolio-section">
+        <p class="portfolio-empty">Portfolio odeljak je pripremljen za murale i naručene radove.</p>
+      </section>
+    `;
+    return;
+  }
+
+  const cardsHtml = PORTFOLIO_ITEMS.map((item, idx) => `
+    <article class="portfolio-card">
+      ${item.image ? `
+        <figure class="portfolio-media" data-portfolio-idx="${idx}">
+          <img src="${item.image}" alt="${item.title || "Portfolio rad"}" />
+        </figure>
+      ` : ""}
+      <div class="portfolio-meta">
+        <div class="portfolio-header-row">
+          <h2 class="portfolio-title">${item.title || ""}</h2>
+          ${item.year ? `<span class="portfolio-year">${item.year}</span>` : ""}
+        </div>
+        ${item.location ? `<p class="portfolio-location">${item.location}</p>` : ""}
+        ${item.description ? `<p class="portfolio-description">${item.description}</p>` : ""}
+      </div>
+    </article>
+  `).join("");
+
+  container.innerHTML = `<section class="portfolio-section"><div class="portfolio-grid">${cardsHtml}</div></section>`;
+
+  container.querySelectorAll("[data-portfolio-idx]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const item = PORTFOLIO_ITEMS[Number(el.dataset.portfolioIdx)];
+      if (item && item.image) {
+        openLightbox(item.image);
+      }
+    });
+  });
+}
+
+function renderContact(container) {
+  container.style.display = "block";
+  container.innerHTML = `
+    <section class="contact-section">
+      <p class="contact-location">${SITE_CONFIG.location}</p>
+
+      <ul class="contact-list">
+        <li>
+          <span class="contact-label">Email</span>
+          <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a>
+        </li>
+        <li>
+          <span class="contact-label">Phone</span>
+          <a href="tel:${SITE_CONFIG.phone}">${SITE_CONFIG.phoneDisplay}</a>
+        </li>
+        <li>
+          <span class="contact-label">Instagram</span>
+          <a
+            href="${SITE_CONFIG.instagramUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >${SITE_CONFIG.instagramHandle}</a>
+        </li>
+      </ul>
+    </section>
+  `;
+}
+
+function loadDimensionsAndRender(container, urls) {
+  if (!urls.length) {
+    container.style.display = "block";
+    container.innerHTML = `
+      <section class="contact-section">
+        <p>Još uvek nema dodatih fotografija u ovoj sekciji.</p>
+      </section>
+    `;
+    return;
+  }
+
+  const shuffledUrls = shuffleArray(urls);
+  const promises = shuffledUrls.map((url) => {
+    if (ratioCache.has(url)) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const probe = new Image();
+      probe.onload = () => {
+        const w = probe.naturalWidth || 4;
+        const h = probe.naturalHeight || 3;
+        ratioCache.set(url, { url, ratio: w / h, naturalWidth: w, naturalHeight: h });
+        resolve();
+      };
+      probe.onerror = () => {
+        ratioCache.set(url, { url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
+        resolve();
+      };
+      probe.src = url;
+    });
+  });
+
+  Promise.all(promises).then(() => {
+    currentOrderedItems = shuffledUrls.map((url) => ratioCache.get(url));
+    if (currentSection === "color" || currentSection === "bw") {
+      renderMosaic(container, currentOrderedItems);
+    }
+  });
+}
+
+function navigateTo(section) {
+  currentSection = section;
+  setActiveNav(section);
+  const container = renderHeaderAndShell();
+
+  if (section === "home") {
+    renderHome(container);
+  } else if (section === "portfolio") {
+    renderPortfolio(container);
+  } else if (section === "color") {
+    loadDimensionsAndRender(container, buildPhotoList(rawColorLinks));
+  } else if (section === "bw") {
+    loadDimensionsAndRender(container, buildPhotoList(rawBWLinks));
+  } else if (section === "contact") {
+    renderContact(container);
+  }
+}
+
+createLightbox();
+navigateTo("home");
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const container = document.getElementById("gallery");
+    if (!container) return;
+    if ((currentSection === "color" || currentSection === "bw") && currentOrderedItems.length) {
+      renderMosaic(container, currentOrderedItems);
+    }
+  }, 120);
+});
