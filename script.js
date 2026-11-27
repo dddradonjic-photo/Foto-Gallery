@@ -16,58 +16,54 @@ const SITE_CONFIG = {
 // Ako ne dopišeš ništa pored linka, slika se svakako vidi u ALL.
 
 const rawColorLinks = `
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_2.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_28.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_8.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_3.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300413/B_34.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300412/B_1.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_20.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_25.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300397/B_16.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_11.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_5.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_9.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300395/B_4.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300394/B_33.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300286/A_26.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300285/A_24.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300285/A_19.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300284/A_31.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300283/A_17.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300282/A_27.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300216/f_69_33.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300215/f_69_28.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300214/f_69_27.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300213/f_69_18.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300212/f_69_14.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300212/f_69_12.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300211/f_69_37.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300210/f_69_34.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300209/f_69_32.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300209/f_69_31.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300208/f_69_20.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300207/f_69_17.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300206/f_69_16.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300202/f_69_15.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300201/f_69_13.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300200/f_69_10.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300199/f_69_7.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300199/f_69_3.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300198/f_69_2.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300197/f_69_1.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795300197/f_69_38.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299940/11640334_473985242767569_1020732956_o.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299940/11539872_473985356100891_461986800_o.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299939/11638915_473987322767361_1090747710_o.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299906/000068.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299906/000067.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299905/000047.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000056.jpg
-https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000066.jpg
-`;
-
-const rawBWLinks = `
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_20.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_11.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_5.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300396/B_9.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300395/B_4.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300285/A_24.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300283/A_17.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300207/f_69_17.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300202/f_69_15.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299940/11640334_473985242767569_1020732956_o.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299940/11539872_473985356100891_461986800_o.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299939/11638915_473987322767361_1090747710_o.jpg people
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_2.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300416/B_28.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_8.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300414/B_3.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300413/B_34.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300412/B_1.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300399/B_25.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300394/B_33.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300286/A_26.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300285/A_19.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300284/A_31.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300282/A_27.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300214/f_69_27.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300213/f_69_18.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300212/f_69_12.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300211/f_69_37.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300210/f_69_34.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300206/f_69_16.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300200/f_69_10.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300199/f_69_7.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300199/f_69_3.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300198/f_69_2.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300197/f_69_1.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300197/f_69_38.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299906/000068.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299905/000047.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000056.jpg places
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300216/f_69_33.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300212/f_69_14.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300209/f_69_32.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300209/f_69_31.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300208/f_69_20.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795300201/f_69_13.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299906/000067.jpg fragments
+https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000066.jpg fragments
+`;const rawBWLinks = `
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000003.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000046.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299860/000006.jpg
