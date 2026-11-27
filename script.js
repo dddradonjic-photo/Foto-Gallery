@@ -1,6 +1,6 @@
 const SITE_CONFIG = {
   name: "David Radonjić",
-  subtitle: "Analog Photography",
+  subtitle: "ARTIST / PHOTOGRAPHER",
   email: "radonjicdavid1@gmail.com",
   phone: "+381606795566",
   phoneDisplay: "+381 60 679 5566",
@@ -63,7 +63,9 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795300208/f_69_20.jpg fragmen
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795300201/f_69_13.jpg fragments
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299906/000067.jpg fragments
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299904/000066.jpg fragments
-`;const rawBWLinks = `
+`;
+
+const rawBWLinks = `
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000003.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299859/000046.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299860/000006.jpg
@@ -77,7 +79,9 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000037.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000038.jpg
 `;
 
-// Poseban slot za PORTFOLIO (murale i naručene radove) — punimo u sledećem koraku.
+// Projekti se dodaju sutra — za svaki projekat će moći da ide:
+// type: "commissions" ili "assistance"
+// title, hoverText, description, mainImage, galleryImages: [...]
 const PORTFOLIO_ITEMS = [];
 
 const PHOTO_CATEGORIES = [
@@ -183,25 +187,26 @@ function closeLightbox() {
   document.body.style.overflowY = "";
 }
 
-// Header i navigacija
+// Header i padajući meniji na dole
 let currentSection = "home";
 let currentCategory = "all";
 let currentSectionEntries = [];
 let currentOrderedItems = [];
-let isPhotoMenuOpen = false;
-let photoGroupEl = null;
-let photoToggleBtn = null;
+let openDropdownGroup = null; // "portfolio" | "photography" | null
+const dropdownGroups = new Map();
 const ratioCache = new Map();
 const navButtons = new Map();
 
-function setPhotoMenuOpen(open) {
-  isPhotoMenuOpen = open;
-  if (photoGroupEl) {
-    photoGroupEl.classList.toggle("is-open", open);
-  }
-  if (photoToggleBtn) {
-    photoToggleBtn.setAttribute("aria-expanded", String(open));
-  }
+function setOpenDropdown(groupName) {
+  openDropdownGroup = groupName;
+  dropdownGroups.forEach((groupEl, name) => {
+    const isOpen = name === groupName;
+    groupEl.classList.toggle("is-open", isOpen);
+    const toggleBtn = groupEl.querySelector(".nav-parent");
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-expanded", String(isOpen));
+    }
+  });
 }
 
 function setActiveNav(section) {
@@ -209,13 +214,82 @@ function setActiveNav(section) {
     btn.classList.toggle("is-active", key === section);
   });
 
-  const isPhotoSub = section === "color" || section === "bw";
-  if (photoToggleBtn) {
-    photoToggleBtn.classList.toggle("is-active", isPhotoSub || isPhotoMenuOpen);
+  const portfolioToggle = dropdownGroups.get("portfolio")?.querySelector(".nav-parent");
+  if (portfolioToggle) {
+    portfolioToggle.classList.toggle(
+      "is-active",
+      section === "commissions" || section === "assistance" || openDropdownGroup === "portfolio"
+    );
   }
-  if (isPhotoSub) {
-    setPhotoMenuOpen(true);
+
+  const photoToggle = dropdownGroups.get("photography")?.querySelector(".nav-parent");
+  if (photoToggle) {
+    photoToggle.classList.toggle(
+      "is-active",
+      section === "color" || section === "bw" || openDropdownGroup === "photography"
+    );
   }
+}
+
+function createDropdownGroup(groupName, labelText, subItems) {
+  const groupEl = document.createElement("div");
+  groupEl.className = "nav-group";
+  groupEl.dataset.group = groupName;
+
+  groupEl.addEventListener("mouseenter", () => {
+    if (window.innerWidth > 768) {
+      setOpenDropdown(groupName);
+      setActiveNav(currentSection);
+    }
+  });
+
+  groupEl.addEventListener("mouseleave", () => {
+    if (window.innerWidth > 768 && openDropdownGroup === groupName) {
+      const activeSubkeys = subItems.map((s) => s.key);
+      if (!activeSubkeys.includes(currentSection)) {
+        setOpenDropdown(null);
+        setActiveNav(currentSection);
+      }
+    }
+  });
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "nav-link nav-parent";
+  toggleBtn.textContent = labelText;
+  toggleBtn.setAttribute("aria-expanded", "false");
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isAlreadyOpen = openDropdownGroup === groupName;
+    const nextState = !isAlreadyOpen;
+    setOpenDropdown(nextState ? groupName : null);
+    setActiveNav(currentSection);
+
+    if (nextState && subItems.length && !subItems.some((s) => s.key === currentSection)) {
+      navigateTo(subItems[0].key, { keepDropdownOpen: true });
+    }
+  });
+
+  const subMenu = document.createElement("div");
+  subMenu.className = "nav-submenu";
+
+  subItems.forEach(({ key, label }) => {
+    const subBtn = document.createElement("button");
+    subBtn.type = "button";
+    subBtn.className = "nav-link nav-sublink";
+    subBtn.textContent = label;
+    subBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      navigateTo(key, { keepDropdownOpen: true });
+    });
+    navButtons.set(key, subBtn);
+    subMenu.appendChild(subBtn);
+  });
+
+  groupEl.appendChild(toggleBtn);
+  groupEl.appendChild(subMenu);
+  dropdownGroups.set(groupName, groupEl);
+  return groupEl;
 }
 
 function renderHeaderAndShell() {
@@ -234,7 +308,6 @@ function renderHeaderAndShell() {
     titleLink.textContent = SITE_CONFIG.name;
     titleLink.addEventListener("click", (e) => {
       e.preventDefault();
-      setPhotoMenuOpen(false);
       navigateTo("home");
     });
 
@@ -255,82 +328,24 @@ function renderHeaderAndShell() {
     homeBtn.className = "nav-link";
     homeBtn.textContent = "HOME";
     homeBtn.addEventListener("click", () => {
-      setPhotoMenuOpen(false);
       navigateTo("home");
     });
     navButtons.set("home", homeBtn);
     nav.appendChild(homeBtn);
 
-    // 2. PORTFOLIO
-    const portfolioBtn = document.createElement("button");
-    portfolioBtn.type = "button";
-    portfolioBtn.className = "nav-link";
-    portfolioBtn.textContent = "PORTFOLIO";
-    portfolioBtn.addEventListener("click", () => {
-      setPhotoMenuOpen(false);
-      navigateTo("portfolio");
-    });
-    navButtons.set("portfolio", portfolioBtn);
-    nav.appendChild(portfolioBtn);
+    // 2. PORTFOLIO (klizi na dole: COMMISSIONS / ASSISTANCE)
+    const portfolioGroup = createDropdownGroup("portfolio", "PORTFOLIO", [
+      { key: "commissions", label: "COMMISSIONS" },
+      { key: "assistance", label: "ASSISTANCE" }
+    ]);
+    nav.appendChild(portfolioGroup);
 
-    // 3. PHOTOGRAPHY (razvija se na COLOR i B&W)
-    photoGroupEl = document.createElement("div");
-    photoGroupEl.className = "nav-group";
-    photoGroupEl.addEventListener("mouseenter", () => {
-      if (window.innerWidth > 768) {
-        setPhotoMenuOpen(true);
-      }
-    });
-    photoGroupEl.addEventListener("mouseleave", () => {
-      if (window.innerWidth > 768 && currentSection !== "color" && currentSection !== "bw") {
-        setPhotoMenuOpen(false);
-      }
-    });
-
-    photoToggleBtn = document.createElement("button");
-    photoToggleBtn.type = "button";
-    photoToggleBtn.className = "nav-link nav-parent";
-    photoToggleBtn.textContent = "PHOTOGRAPHY";
-    photoToggleBtn.setAttribute("aria-expanded", "false");
-    photoToggleBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const nextState = !isPhotoMenuOpen;
-      setPhotoMenuOpen(nextState);
-      if (nextState && currentSection !== "color" && currentSection !== "bw") {
-        navigateTo("color");
-      }
-    });
-
-    const subMenu = document.createElement("div");
-    subMenu.className = "nav-submenu";
-
-    const colorBtn = document.createElement("button");
-    colorBtn.type = "button";
-    colorBtn.className = "nav-link nav-sublink";
-    colorBtn.textContent = "COLOR";
-    colorBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      setPhotoMenuOpen(true);
-      navigateTo("color");
-    });
-    navButtons.set("color", colorBtn);
-
-    const bwBtn = document.createElement("button");
-    bwBtn.type = "button";
-    bwBtn.className = "nav-link nav-sublink";
-    bwBtn.textContent = "B&W";
-    bwBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      setPhotoMenuOpen(true);
-      navigateTo("bw");
-    });
-    navButtons.set("bw", bwBtn);
-
-    subMenu.appendChild(colorBtn);
-    subMenu.appendChild(bwBtn);
-    photoGroupEl.appendChild(photoToggleBtn);
-    photoGroupEl.appendChild(subMenu);
-    nav.appendChild(photoGroupEl);
+    // 3. PHOTOGRAPHY (klizi na dole: COLOR / B&W)
+    const photoGroup = createDropdownGroup("photography", "PHOTOGRAPHY", [
+      { key: "color", label: "COLOR" },
+      { key: "bw", label: "B&W" }
+    ]);
+    nav.appendChild(photoGroup);
 
     // 4. CONTACT
     const contactBtn = document.createElement("button");
@@ -338,7 +353,6 @@ function renderHeaderAndShell() {
     contactBtn.className = "nav-link";
     contactBtn.textContent = "CONTACT";
     contactBtn.addEventListener("click", () => {
-      setPhotoMenuOpen(false);
       navigateTo("contact");
     });
     navButtons.set("contact", contactBtn);
@@ -347,6 +361,21 @@ function renderHeaderAndShell() {
     header.appendChild(brandBlock);
     header.appendChild(nav);
     document.body.prepend(header);
+
+    document.addEventListener("click", (e) => {
+      if (openDropdownGroup && !header.contains(e.target)) {
+        const activeSubkeys =
+          openDropdownGroup === "portfolio"
+            ? ["commissions", "assistance"]
+            : openDropdownGroup === "photography"
+            ? ["color", "bw"]
+            : [];
+        if (!activeSubkeys.includes(currentSection)) {
+          setOpenDropdown(null);
+          setActiveNav(currentSection);
+        }
+      }
+    });
   }
 
   let galleryContainer = document.getElementById("gallery");
@@ -555,43 +584,67 @@ function renderHome(container) {
   }
 }
 
-function renderPortfolio(container) {
+function renderPortfolioSection(container, mode) {
   container.style.display = "block";
+  const label = mode === "commissions" ? "COMMISSIONS" : "ASSISTANCE";
+  const items = PORTFOLIO_ITEMS.filter((item) => item.type === mode);
 
-  if (!PORTFOLIO_ITEMS.length) {
+  if (!items.length) {
     container.innerHTML = `
       <section class="portfolio-section">
-        <p class="portfolio-empty">Portfolio odeljak je pripremljen za murale i naručene radove.</p>
+        <div class="portfolio-section-head">
+          <h1 class="portfolio-heading">${label}</h1>
+        </div>
+        <p class="portfolio-empty">Projekti za ${label} će biti dodati uskoro.</p>
       </section>
     `;
     return;
   }
 
-  const cardsHtml = PORTFOLIO_ITEMS.map((item, idx) => `
-    <article class="portfolio-card">
-      ${item.image ? `
-        <figure class="portfolio-media" data-portfolio-idx="${idx}">
-          <img src="${item.image}" alt="${item.title || "Portfolio rad"}" />
-        </figure>
-      ` : ""}
-      <div class="portfolio-meta">
-        <div class="portfolio-header-row">
-          <h2 class="portfolio-title">${item.title || ""}</h2>
-          ${item.year ? `<span class="portfolio-year">${item.year}</span>` : ""}
+  const projectsHtml = items.map((item, idx) => {
+    const secondaryPhotos = Array.isArray(item.galleryImages) ? item.galleryImages : [];
+    const secondaryHtml = secondaryPhotos.map((imgUrl) => `
+      <figure class="project-thumb" data-light-src="${imgUrl}">
+        <img src="${imgUrl}" alt="${item.title || label}" />
+        ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
+      </figure>
+    `).join("");
+
+    return `
+      <article class="project-block" data-project-idx="${idx}">
+        <div class="project-layout">
+          <div class="project-visuals">
+            ${item.mainImage ? `
+              <figure class="project-main-photo" data-light-src="${item.mainImage}">
+                <img src="${item.mainImage}" alt="${item.title || label} — završen rad" />
+                ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
+              </figure>
+            ` : ""}
+            ${secondaryHtml ? `<div class="project-thumbs-grid">${secondaryHtml}</div>` : ""}
+          </div>
+          <div class="project-info">
+            <span class="project-role-tag">${label}</span>
+            ${item.title ? `<h2 class="project-title">${item.title}</h2>` : ""}
+            ${item.description ? `<p class="project-description">${item.description}</p>` : ""}
+          </div>
         </div>
-        ${item.location ? `<p class="portfolio-location">${item.location}</p>` : ""}
-        ${item.description ? `<p class="portfolio-description">${item.description}</p>` : ""}
+      </article>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <section class="portfolio-section">
+      <div class="portfolio-section-head">
+        <h1 class="portfolio-heading">${label}</h1>
       </div>
-    </article>
-  `).join("");
+      <div class="portfolio-list">${projectsHtml}</div>
+    </section>
+  `;
 
-  container.innerHTML = `<section class="portfolio-section"><div class="portfolio-grid">${cardsHtml}</div></section>`;
-
-  container.querySelectorAll("[data-portfolio-idx]").forEach((el) => {
+  container.querySelectorAll("[data-light-src]").forEach((el) => {
     el.addEventListener("click", () => {
-      const item = PORTFOLIO_ITEMS[Number(el.dataset.portfolioIdx)];
-      if (item && item.image) {
-        openLightbox(item.image);
+      if (el.dataset.lightSrc) {
+        openLightbox(el.dataset.lightSrc);
       }
     });
   });
@@ -664,16 +717,24 @@ function loadDimensionsAndRender(container, entries) {
   });
 }
 
-function navigateTo(section) {
+function navigateTo(section, options = {}) {
+  const { keepDropdownOpen = false } = options;
   currentSection = section;
   currentCategory = "all";
+
+  if (!keepDropdownOpen) {
+    setOpenDropdown(null);
+  }
+
   setActiveNav(section);
   const container = renderHeaderAndShell();
 
   if (section === "home") {
     renderHome(container);
-  } else if (section === "portfolio") {
-    renderPortfolio(container);
+  } else if (section === "commissions") {
+    renderPortfolioSection(container, "commissions");
+  } else if (section === "assistance") {
+    renderPortfolioSection(container, "assistance");
   } else if (section === "color") {
     loadDimensionsAndRender(container, parsePhotoEntries(rawColorLinks));
   } else if (section === "bw") {
