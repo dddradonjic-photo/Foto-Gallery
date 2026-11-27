@@ -22,7 +22,7 @@ body {
   max-width: 1320px;
   margin: 0 auto 36px;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
@@ -54,29 +54,37 @@ body {
 
 .site-nav {
   display: flex;
-  align-items: center;
-  gap: 22px;
+  align-items: flex-start;
+  gap: 24px;
   flex-wrap: wrap;
-  padding-bottom: 4px;
+  padding-top: 6px;
 }
 
+/* Padajući meni na dole */
 .nav-group {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .nav-submenu {
-  display: none;
-  align-items: center;
-  gap: 14px;
-  padding-left: 12px;
-  border-left: 1px solid #d8d8d8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding-top: 0;
+  margin-top: 0;
+  transition: max-height 0.26s ease, opacity 0.22s ease, padding-top 0.26s ease;
 }
 
 .nav-group.is-open .nav-submenu {
-  display: inline-flex;
+  max-height: 140px;
+  opacity: 1;
+  padding-top: 10px;
 }
 
 .nav-link {
@@ -91,6 +99,7 @@ body {
   color: #666666;
   cursor: pointer;
   text-decoration: none;
+  text-align: left;
   transition: color 0.2s ease;
 }
 
@@ -173,10 +182,22 @@ body {
   margin: 0 auto;
 }
 
-/* PORTFOLIO sekcija */
+/* PORTFOLIO sekcije (COMMISSIONS / ASSISTANCE) */
 .portfolio-section {
   width: 100%;
   margin-top: 8px;
+}
+
+.portfolio-section-head {
+  margin-bottom: 28px;
+}
+
+.portfolio-heading {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #111111;
 }
 
 .portfolio-empty {
@@ -184,65 +205,94 @@ body {
   color: #666666;
 }
 
-.portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
-}
-
-.portfolio-card {
+.portfolio-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 56px;
 }
 
-.portfolio-media {
-  width: 100%;
-  background: #f5f5f5;
+.project-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(240px, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.project-visuals {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.project-main-photo,
+.project-thumb {
+  position: relative;
   overflow: hidden;
+  background: #f5f5f5;
   cursor: zoom-in;
 }
 
-.portfolio-media img {
+.project-main-photo img {
   width: 100%;
-  height: 260px;
+  max-height: 520px;
   object-fit: cover;
   display: block;
 }
 
-.portfolio-meta {
+.project-thumbs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.project-thumb img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.project-hover-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 12px 14px;
+  background: rgba(17, 17, 17, 0.78);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.project-main-photo:hover .project-hover-caption,
+.project-thumb:hover .project-hover-caption {
+  opacity: 1;
+}
+
+.project-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding-top: 2px;
 }
 
-.portfolio-header-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+.project-role-tag {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #777777;
 }
 
-.portfolio-title {
-  font-size: 15px;
+.project-title {
+  font-size: 16px;
   font-weight: 500;
   color: #111111;
 }
 
-.portfolio-year {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: #777777;
-}
-
-.portfolio-location {
-  font-size: 12px;
-  color: #666666;
-}
-
-.portfolio-description {
+.project-description {
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: #333333;
 }
 
@@ -391,16 +441,12 @@ body {
   }
 
   .site-nav {
-    gap: 14px;
+    gap: 16px;
   }
 
-  .nav-group {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .nav-submenu {
-    padding-left: 10px;
+  .project-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .category-filter-bar {
@@ -412,7 +458,10 @@ body {
     gap: 12px;
   }
 
-  .photo-item:hover {
+  .photo-item:hover,
+  .project-main-photo:hover .project-hover-caption,
+  .project-thumb:hover .project-hover-caption {
     transform: none;
+    opacity: 0;
   }
 }
