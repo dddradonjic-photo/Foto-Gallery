@@ -774,3 +774,188 @@ function renderPortfolioSection(container, mode) {
         <p class="portfolio-empty">Projekti za ${label} će biti dodati uskoro.</p>
       </section>
     `;
+    return;
+  }
+
+  const cardsHtml = items.map((item) => `
+    <article class="portfolio-front-card" data-project-id="${item.id}">
+      <figure class="portfolio-front-figure">
+        <img
+          src="${getThumbUrl(item.mainImage, 1200)}"
+          alt="${item.title}"
+          loading="lazy"
+          decoding="async"
+        />
+        <figcaption class="portfolio-front-overlay">
+          <span class="portfolio-front-hover-text">${item.hoverText || item.title}</span>
+        </figcaption>
+      </figure>
+    </article>
+  `).join("");
+
+  container.innerHTML = `
+    <section class="portfolio-section">
+      <div class="portfolio-section-head">
+        <h1 class="portfolio-heading">${label}</h1>
+      </div>
+      <div class="portfolio-front-grid">${cardsHtml}</div>
+    </section>
+  `;
+
+  container.querySelectorAll("[data-project-id]").forEach((cardEl) => {
+    cardEl.addEventListener("click", () => {
+      const found = items.find((p) => p.id === cardEl.dataset.projectId);
+      if (found) {
+        renderProjectDetail(container, found);
+      }
+    });
+  });
+}
+
+function renderContact(container) {
+  container.style.display = "block";
+  container.innerHTML = `
+    <section class="contact-section">
+      <p class="contact-location">${SITE_CONFIG.location}</p>
+
+      <ul class="contact-list">
+        <li>
+          <span class="contact-label">Email</span>
+          <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a>
+        </li>
+        <li>
+          <span class="contact-label">Phone</span>
+          <a href="tel:${SITE_CONFIG.phone}">${SITE_CONFIG.phoneDisplay}</a>
+        </li>
+        <li>
+          <span class="contact-label">Instagram</span>
+          <a
+            href="${SITE_CONFIG.instagramUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >${SITE_CONFIG.instagramHandle}</a>
+        </li>
+      </ul>
+    </section>
+  `;
+}
+
+function loadDimensionsAndRender(container, entries) {
+  if (!entries.length) {
+    container.style.display = "block";
+    container.innerHTML = `
+      <section class="contact-section">
+        <p>Još uvek nema dodatih fotografija u ovoj sekciji.</p>
+      </section>
+    `;
+    return;
+  }
+
+  const shuffledEntries = shuffleArray(entries);
+  currentSectionEntries = shuffledEntries;
+
+  // Prikaži odmah ono što već imamo u kešu, a za ostale učitaj dimenzije preko male slike
+  const settings = getViewportSettings();
+  let renderedOnce = false;
+  let loadedCount = 0;
+
+  const maybeRenderProgress = () => {
+    const readyItems = shuffledEntries
+      .map((entry) => ratioCache.get(entry.url))
+      .filter(Boolean);
+
+    if (!readyItems.length) return;
+
+    if (!renderedOnce && (loadedCount >= Math.min(4, shuffledEntries.length) || loadedCount === shuffledEntries.length)) {
+      renderedOnce = true;
+      currentOrderedItems = readyItems;
+      renderMosaic(container, currentOrderedItems);
+    } else if (renderedOnce && loadedCount === shuffledEntries.length) {
+      applyCategoryFilter(container);
+    }
+  };
+
+  maybeRenderProgress();
+
+  shuffledEntries.forEach((entry) => {
+    if (ratioCache.has(entry.url)) {
+      loadedCount += 1;
+      maybeRenderProgress();
+      return;
+    }
+
+    const probe = new Image();
+    probe.decoding = "async";
+    probe.onload = () => {
+      const w = probe.naturalWidth || 4;
+      const h = probe.naturalHeight || 3;
+      ratioCache.set(entry.url, { url: entry.url, ratio: w / h, naturalWidth: w, naturalHeight: h });
+      loadedCount += 1;
+      if (currentSection === "color" || currentSection === "bw") {
+        maybeRenderProgress();
+      }
+    };
+    probe.onerror = () => {
+      ratioCache.set(entry.url, { url: entry.url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
+      loadedCount += 1;
+      if (currentSection === "color" || currentSection === "bw") {
+        maybeRenderProgress();
+      }
+    };
+    // Dimenzije merimo na manjoj slici da telefon ne povuče ceo 5+ MB fajl samo zbog merenja
+    probe.src = getThumbUrl(entry.url, settings.thumbWidth);
+  });
+}
+
+function navigateTo(section, options = {}) {
+  const { keepDropdownOpen = false } = options;
+  currentSection = section;
+  currentCategory = "all";
+  activeProjectDetail = null;
+
+  if (!keepDropdownOpen) {
+    setOpenDropdown(null);
+  }
+
+  setActiveNav(section);
+  const container = renderHeaderAndShell();
+
+  if (section === "home") {
+    renderHome(container);
+  } else if (section === "commissions") {
+    renderPortfolioSection(container, "commissions");
+  } else if (section === "assistance") {
+    renderPortfolioSection(container, "assistance");
+  } else if (section === "color") {
+    loadDimensionsAndRender(container, parsePhotoEntries(rawColorLinks));
+  } else if (section === "bw") {
+    loadDimensionsAndRender(container, parsePhotoEntries(rawBWLinks));
+  } else if (section === "contact") {
+    renderContact(container);
+  }
+}
+
+createLightbox();
+navigateTo("home");
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const container = document.getElementById("gallery");
+    if (!container) return;
+    if ((currentSection === "color" || currentSection === "bw") && currentOrderedItems.length) {
+      renderMosaic(container, currentOrderedItems);
+    } else if (activeProjectDetail) {
+      const mosaicTarget = document.getElementById("project-detail-mosaic");
+      if (mosaicTarget && Array.isArray(activeProjectDetail.galleryImages)) {
+        const records = activeProjectDetail.galleryImages
+          .map((u) => ratioCache.get(u))
+          .filter(Boolean);
+        if (records.length) {
+          renderMosaicGridInto(mosaicTarget, records);
+        }
+      }
+    }
+  }, 120);
+});
