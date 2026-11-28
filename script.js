@@ -79,10 +79,25 @@ https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000037.jpg
 https://res.cloudinary.com/zcvep3xs/image/upload/v1795299864/000038.jpg
 `;
 
-// Projekti se dodaju sutra — za svaki projekat će moći da ide:
-// type: "commissions" ili "assistance"
-// title, hoverText, description, mainImage, galleryImages: [...]
-const PORTFOLIO_ITEMS = [];
+// PORTFOLIO PROJEKTI (type: "commissions" ili "assistance")
+const PORTFOLIO_ITEMS = [
+  {
+    id: "life-ivona-pleskonja-2020",
+    type: "assistance",
+    title: "LIFE — Ivona Pleskonja, 2020",
+    hoverText: "LIFE — Ivona Pleskonja, 2020",
+    description:
+      "Large-scale outdoor mural located at the entrance of the Skyline Belgrade complex (Sarajevska Street). Inspired by nature, human resilience, and organic energy, the work brings expressive figurative and botanical motifs into the public space. Assisted the lead artist with wall preparation and painting execution.",
+    mainImage: "https://res.cloudinary.com/zcvep3xs/image/upload/v1795864545/DSC_0305.jpg",
+    galleryImages: [
+      "https://res.cloudinary.com/zcvep3xs/image/upload/v1795864549/DSC_0288.jpg",
+      "https://res.cloudinary.com/zcvep3xs/image/upload/v1795864547/DSC_0283.jpg",
+      "https://res.cloudinary.com/zcvep3xs/image/upload/v1795864546/DSC_0310.jpg",
+      "https://res.cloudinary.com/zcvep3xs/image/upload/v1795864673/DSC_0281.jpg"
+    ],
+    vimeoUrl: ""
+  }
+];
 
 const PHOTO_CATEGORIES = [
   { id: "all", label: "ALL" },
@@ -121,6 +136,19 @@ function getThumbUrl(originalUrl, maxWidth = 900) {
 // Za lightbox se uvek koristi puni originalni URL
 function getFullUrl(originalUrl) {
   return originalUrl;
+}
+
+function getVimeoEmbedUrl(vimeoUrl) {
+  if (!vimeoUrl || typeof vimeoUrl !== "string") return "";
+  const trimmed = vimeoUrl.trim();
+  if (!trimmed) return "";
+  if (trimmed.includes("player.vimeo.com/video/")) return trimmed;
+
+  const match = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (match && match[1]) {
+    return `https://player.vimeo.com/video/${match[1]}`;
+  }
+  return "";
 }
 
 function parsePhotoEntries(rawText) {
@@ -213,6 +241,7 @@ let currentSection = "home";
 let currentCategory = "all";
 let currentSectionEntries = [];
 let currentOrderedItems = [];
+let activeProjectDetail = null;
 let openDropdownGroup = null; // "portfolio" | "photography" | null
 const dropdownGroups = new Map();
 const ratioCache = new Map();
@@ -495,49 +524,14 @@ function buildRows(items, containerWidth, settings) {
   return rows;
 }
 
-function buildFilterBar(container) {
-  const bar = document.createElement("div");
-  bar.className = "category-filter-bar";
-  bar.setAttribute("role", "tablist");
-  bar.setAttribute("aria-label", "Filter kategorija fotografija");
-
-  PHOTO_CATEGORIES.forEach(({ id, label }) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "category-chip";
-    if (currentCategory === id) {
-      btn.classList.add("is-active");
-    }
-    btn.textContent = label;
-    btn.addEventListener("click", () => {
-      if (currentCategory === id) return;
-      currentCategory = id;
-      applyCategoryFilter(container);
-    });
-    bar.appendChild(btn);
-  });
-
-  return bar;
-}
-
-function renderMosaic(container, items) {
+function renderMosaicGridInto(targetEl, items) {
   const settings = getViewportSettings();
-  const containerWidth = container.getBoundingClientRect().width || window.innerWidth - 64;
+  const containerWidth = targetEl.getBoundingClientRect().width || window.innerWidth - 64;
 
-  container.innerHTML = "";
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.gap = `${settings.gap}px`;
-
-  container.appendChild(buildFilterBar(container));
-
-  if (!items.length) {
-    const emptyMsg = document.createElement("p");
-    emptyMsg.className = "category-empty-msg";
-    emptyMsg.textContent = "Još uvek nema označenih fotografija u ovoj kategoriji.";
-    container.appendChild(emptyMsg);
-    return;
-  }
+  targetEl.innerHTML = "";
+  targetEl.style.display = "flex";
+  targetEl.style.flexDirection = "column";
+  targetEl.style.gap = `${settings.gap}px`;
 
   const rows = buildRows(items, containerWidth, settings);
 
@@ -580,8 +574,57 @@ function renderMosaic(container, items) {
       rowEl.appendChild(figure);
     });
 
-    container.appendChild(rowEl);
+    targetEl.appendChild(rowEl);
   });
+}
+
+function buildFilterBar(container) {
+  const bar = document.createElement("div");
+  bar.className = "category-filter-bar";
+  bar.setAttribute("role", "tablist");
+  bar.setAttribute("aria-label", "Filter kategorija fotografija");
+
+  PHOTO_CATEGORIES.forEach(({ id, label }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "category-chip";
+    if (currentCategory === id) {
+      btn.classList.add("is-active");
+    }
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      if (currentCategory === id) return;
+      currentCategory = id;
+      applyCategoryFilter(container);
+    });
+    bar.appendChild(btn);
+  });
+
+  return bar;
+}
+
+function renderMosaic(container, items) {
+  const settings = getViewportSettings();
+
+  container.innerHTML = "";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = `${settings.gap}px`;
+
+  container.appendChild(buildFilterBar(container));
+
+  if (!items.length) {
+    const emptyMsg = document.createElement("p");
+    emptyMsg.className = "category-empty-msg";
+    emptyMsg.textContent = "Još uvek nema označenih fotografija u ovoj kategoriji.";
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const gridWrap = document.createElement("div");
+  gridWrap.className = "mosaic-grid-wrap";
+  container.appendChild(gridWrap);
+  renderMosaicGridInto(gridWrap, items);
 }
 
 function applyCategoryFilter(container) {
@@ -617,7 +660,107 @@ function renderHome(container) {
   }
 }
 
+function probeImageRatios(urls, thumbWidth) {
+  return Promise.all(
+    urls.map((url) => {
+      if (ratioCache.has(url)) {
+        return Promise.resolve(ratioCache.get(url));
+      }
+      return new Promise((resolve) => {
+        const probe = new Image();
+        probe.decoding = "async";
+        probe.onload = () => {
+          const w = probe.naturalWidth || 4;
+          const h = probe.naturalHeight || 3;
+          const record = { url, ratio: w / h, naturalWidth: w, naturalHeight: h };
+          ratioCache.set(url, record);
+          resolve(record);
+        };
+        probe.onerror = () => {
+          const record = { url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 };
+          ratioCache.set(url, record);
+          resolve(record);
+        };
+        probe.src = getThumbUrl(url, thumbWidth);
+      });
+    })
+  );
+}
+
+function renderProjectDetail(container, project) {
+  activeProjectDetail = project;
+  container.style.display = "block";
+  const backLabel = project.type === "commissions" ? "COMMISSIONS" : "ASSISTANCE";
+  const embedUrl = getVimeoEmbedUrl(project.vimeoUrl);
+
+  container.innerHTML = `
+    <section class="project-detail-section">
+      <button type="button" class="project-back-btn" id="project-back-trigger">
+        &larr; BACK TO ${backLabel}
+      </button>
+
+      <div class="project-detail-hero">
+        <figure class="project-detail-main-photo" id="project-detail-main-trigger">
+          <img
+            src="${getThumbUrl(project.mainImage, 1400)}"
+            alt="${project.title}"
+            decoding="async"
+          />
+        </figure>
+
+        <div class="project-detail-info">
+          <span class="project-role-tag">${backLabel}</span>
+          <h1 class="project-detail-title">${project.title}</h1>
+          <p class="project-detail-description">${project.description}</p>
+        </div>
+      </div>
+
+      ${embedUrl ? `
+        <div class="project-video-wrap">
+          <iframe
+            src="${embedUrl}"
+            title="${project.title} — video"
+            frameborder="0"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+      ` : ""}
+
+      ${Array.isArray(project.galleryImages) && project.galleryImages.length ? `
+        <div class="project-detail-mosaic" id="project-detail-mosaic"></div>
+      ` : ""}
+    </section>
+  `;
+
+  const backBtn = document.getElementById("project-back-trigger");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      activeProjectDetail = null;
+      navigateTo(project.type, { keepDropdownOpen: true });
+    });
+  }
+
+  const mainTrigger = document.getElementById("project-detail-main-trigger");
+  if (mainTrigger && project.mainImage) {
+    mainTrigger.addEventListener("click", () => openLightbox(project.mainImage));
+  }
+
+  const mosaicTarget = document.getElementById("project-detail-mosaic");
+  if (mosaicTarget && Array.isArray(project.galleryImages) && project.galleryImages.length) {
+    const settings = getViewportSettings();
+    probeImageRatios(project.galleryImages, settings.thumbWidth).then((records) => {
+      if (activeProjectDetail && activeProjectDetail.id === project.id) {
+        renderMosaicGridInto(mosaicTarget, records);
+      }
+    });
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function renderPortfolioSection(container, mode) {
+  activeProjectDetail = null;
   container.style.display = "block";
   const label = mode === "commissions" ? "COMMISSIONS" : "ASSISTANCE";
   const items = PORTFOLIO_ITEMS.filter((item) => item.type === mode);
@@ -631,191 +774,3 @@ function renderPortfolioSection(container, mode) {
         <p class="portfolio-empty">Projekti za ${label} će biti dodati uskoro.</p>
       </section>
     `;
-    return;
-  }
-
-  const projectsHtml = items.map((item, idx) => {
-    const secondaryPhotos = Array.isArray(item.galleryImages) ? item.galleryImages : [];
-    const secondaryHtml = secondaryPhotos.map((imgUrl) => `
-      <figure class="project-thumb" data-light-src="${imgUrl}">
-        <img src="${getThumbUrl(imgUrl, 700)}" alt="${item.title || label}" loading="lazy" decoding="async" />
-        ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
-      </figure>
-    `).join("");
-
-    return `
-      <article class="project-block" data-project-idx="${idx}">
-        <div class="project-layout">
-          <div class="project-visuals">
-            ${item.mainImage ? `
-              <figure class="project-main-photo" data-light-src="${item.mainImage}">
-                <img src="${getThumbUrl(item.mainImage, 1100)}" alt="${item.title || label} — završen rad" loading="lazy" decoding="async" />
-                ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
-              </figure>
-            ` : ""}
-            ${secondaryHtml ? `<div class="project-thumbs-grid">${secondaryHtml}</div>` : ""}
-          </div>
-          <div class="project-info">
-            <span class="project-role-tag">${label}</span>
-            ${item.title ? `<h2 class="project-title">${item.title}</h2>` : ""}
-            ${item.description ? `<p class="project-description">${item.description}</p>` : ""}
-          </div>
-        </div>
-      </article>
-    `;
-  }).join("");
-
-  container.innerHTML = `
-    <section class="portfolio-section">
-      <div class="portfolio-section-head">
-        <h1 class="portfolio-heading">${label}</h1>
-      </div>
-      <div class="portfolio-list">${projectsHtml}</div>
-    </section>
-  `;
-
-  container.querySelectorAll("[data-light-src]").forEach((el) => {
-    el.addEventListener("click", () => {
-      if (el.dataset.lightSrc) {
-        openLightbox(el.dataset.lightSrc);
-      }
-    });
-  });
-}
-
-function renderContact(container) {
-  container.style.display = "block";
-  container.innerHTML = `
-    <section class="contact-section">
-      <p class="contact-location">${SITE_CONFIG.location}</p>
-
-      <ul class="contact-list">
-        <li>
-          <span class="contact-label">Email</span>
-          <a href="mailto:${SITE_CONFIG.email}">${SITE_CONFIG.email}</a>
-        </li>
-        <li>
-          <span class="contact-label">Phone</span>
-          <a href="tel:${SITE_CONFIG.phone}">${SITE_CONFIG.phoneDisplay}</a>
-        </li>
-        <li>
-          <span class="contact-label">Instagram</span>
-          <a
-            href="${SITE_CONFIG.instagramUrl}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >${SITE_CONFIG.instagramHandle}</a>
-        </li>
-      </ul>
-    </section>
-  `;
-}
-
-function loadDimensionsAndRender(container, entries) {
-  if (!entries.length) {
-    container.style.display = "block";
-    container.innerHTML = `
-      <section class="contact-section">
-        <p>Još uvek nema dodatih fotografija u ovoj sekciji.</p>
-      </section>
-    `;
-    return;
-  }
-
-  const shuffledEntries = shuffleArray(entries);
-  currentSectionEntries = shuffledEntries;
-
-  // Prikaži odmah ono što već imamo u kešu, a za ostale učitaj dimenzije preko male slike
-  const settings = getViewportSettings();
-  let renderedOnce = false;
-  let loadedCount = 0;
-
-  const maybeRenderProgress = () => {
-    const readyItems = shuffledEntries
-      .map((entry) => ratioCache.get(entry.url))
-      .filter(Boolean);
-
-    if (!readyItems.length) return;
-
-    if (!renderedOnce && (loadedCount >= Math.min(4, shuffledEntries.length) || loadedCount === shuffledEntries.length)) {
-      renderedOnce = true;
-      currentOrderedItems = readyItems;
-      renderMosaic(container, currentOrderedItems);
-    } else if (renderedOnce && loadedCount === shuffledEntries.length) {
-      applyCategoryFilter(container);
-    }
-  };
-
-  maybeRenderProgress();
-
-  shuffledEntries.forEach((entry) => {
-    if (ratioCache.has(entry.url)) {
-      loadedCount += 1;
-      maybeRenderProgress();
-      return;
-    }
-
-    const probe = new Image();
-    probe.decoding = "async";
-    probe.onload = () => {
-      const w = probe.naturalWidth || 4;
-      const h = probe.naturalHeight || 3;
-      ratioCache.set(entry.url, { url: entry.url, ratio: w / h, naturalWidth: w, naturalHeight: h });
-      loadedCount += 1;
-      if (currentSection === "color" || currentSection === "bw") {
-        maybeRenderProgress();
-      }
-    };
-    probe.onerror = () => {
-      ratioCache.set(entry.url, { url: entry.url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
-      loadedCount += 1;
-      if (currentSection === "color" || currentSection === "bw") {
-        maybeRenderProgress();
-      }
-    };
-    // Dimenzije merimo na manjoj slici da telefon ne povuče ceo 5+ MB fajl samo zbog merenja
-    probe.src = getThumbUrl(entry.url, settings.thumbWidth);
-  });
-}
-
-function navigateTo(section, options = {}) {
-  const { keepDropdownOpen = false } = options;
-  currentSection = section;
-  currentCategory = "all";
-
-  if (!keepDropdownOpen) {
-    setOpenDropdown(null);
-  }
-
-  setActiveNav(section);
-  const container = renderHeaderAndShell();
-
-  if (section === "home") {
-    renderHome(container);
-  } else if (section === "commissions") {
-    renderPortfolioSection(container, "commissions");
-  } else if (section === "assistance") {
-    renderPortfolioSection(container, "assistance");
-  } else if (section === "color") {
-    loadDimensionsAndRender(container, parsePhotoEntries(rawColorLinks));
-  } else if (section === "bw") {
-    loadDimensionsAndRender(container, parsePhotoEntries(rawBWLinks));
-  } else if (section === "contact") {
-    renderContact(container);
-  }
-}
-
-createLightbox();
-navigateTo("home");
-
-let resizeTimer;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    const container = document.getElementById("gallery");
-    if (!container) return;
-    if ((currentSection === "color" || currentSection === "bw") && currentOrderedItems.length) {
-      renderMosaic(container, currentOrderedItems);
-    }
-  }, 120);
-});
