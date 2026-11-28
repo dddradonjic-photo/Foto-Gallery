@@ -418,4 +418,106 @@ body {
   color: #111111;
   text-decoration: none;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease, opacity 0.
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.contact-list a:hover {
+  border-bottom-color: #111111;
+}
+
+/* Lightbox */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 14, 14, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+
+.lightbox-backdrop.is-open {
+  display: flex;
+}
+
+.lightbox-image {
+  max-width: 92vw;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  cursor: default;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox-close:hover {
+  opacity: 1;
+}
+
+/* Telefon i manji ekrani */
+@media (max-width: 768px) {
+  body {
+    padding: 18px 14px 48px;
+  }
+
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .site-nav {
+    gap: 16px;
+  }
+
+  .portfolio-front-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .portfolio-front-figure img {
+    height: 260px;
+  }
+
+  .portfolio-front-overlay {
+    opacity: 1;
+    background: linear-gradient(to top, rgba(14, 14, 14, 0.72), transparent 60%);
+  }
+
+  .project-detail-hero {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .category-filter-bar {
+    gap: 14px;
+  }
+
+  #gallery,
+  .mosaic-row {
+    gap: 12px;
+  }
+
+  .photo-item:hover {
+    transform: none;
+  }
+}
