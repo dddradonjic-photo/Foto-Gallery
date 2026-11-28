@@ -102,6 +102,27 @@ const LAYOUT_CONFIG = {
   maxItemsMobile: 2
 };
 
+// Pretvara Cloudinary link u manju optimizovanu verziju za prikaz u galeriji/karticama
+function getThumbUrl(originalUrl, maxWidth = 900) {
+  if (!originalUrl || typeof originalUrl !== "string") return originalUrl;
+  const marker = "/image/upload/";
+  const idx = originalUrl.indexOf(marker);
+  if (idx === -1) return originalUrl;
+
+  const afterUpload = originalUrl.slice(idx + marker.length);
+  // Ako već ima transformacije posle /upload/, ne dupliramo
+  if (/^(w_|c_|f_|q_|ar_|g_)/.test(afterUpload)) {
+    return originalUrl;
+  }
+
+  return `${originalUrl.slice(0, idx + marker.length)}w_${maxWidth},c_limit,f_auto,q_auto/${afterUpload}`;
+}
+
+// Za lightbox se uvek koristi puni originalni URL
+function getFullUrl(originalUrl) {
+  return originalUrl;
+}
+
 function parsePhotoEntries(rawText) {
   const seen = new Set();
   const entries = [];
@@ -134,7 +155,7 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// Lightbox
+// Lightbox (otvara punu rezoluciju fotografije)
 let lightboxEl = null;
 let lightboxImg = null;
 
@@ -171,9 +192,9 @@ function createLightbox() {
   document.body.appendChild(lightboxEl);
 }
 
-function openLightbox(url) {
+function openLightbox(originalUrl) {
   createLightbox();
-  lightboxImg.src = url;
+  lightboxImg.src = getFullUrl(originalUrl);
   lightboxEl.classList.add("is-open");
   lightboxEl.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -399,7 +420,8 @@ function getViewportSettings() {
       rowHeight: LAYOUT_CONFIG.mobileRowHeight,
       maxItems: LAYOUT_CONFIG.maxItemsMobile,
       maxPortraitInRow: 2,
-      maxLandscapeInRow: 2
+      maxLandscapeInRow: 2,
+      thumbWidth: 640
     };
   }
   if (w < 1100) {
@@ -408,7 +430,8 @@ function getViewportSettings() {
       rowHeight: LAYOUT_CONFIG.tabletRowHeight,
       maxItems: LAYOUT_CONFIG.maxItemsTablet,
       maxPortraitInRow: 3,
-      maxLandscapeInRow: 2
+      maxLandscapeInRow: 2,
+      thumbWidth: 800
     };
   }
   return {
@@ -416,7 +439,8 @@ function getViewportSettings() {
     rowHeight: LAYOUT_CONFIG.desktopRowHeight,
     maxItems: LAYOUT_CONFIG.maxItemsDesktop,
     maxPortraitInRow: 4,
-    maxLandscapeInRow: 2
+    maxLandscapeInRow: 2,
+    thumbWidth: 900
   };
 }
 
@@ -546,8 +570,10 @@ function renderMosaic(container, items) {
       figure.style.height = `${height}px`;
 
       const img = document.createElement("img");
-      img.src = entry.url;
+      img.src = getThumbUrl(entry.url, settings.thumbWidth);
       img.alt = "Fotografija";
+      img.loading = "lazy";
+      img.decoding = "async";
 
       figure.addEventListener("click", () => openLightbox(entry.url));
       figure.appendChild(img);
@@ -564,7 +590,10 @@ function applyCategoryFilter(container) {
       ? currentSectionEntries
       : currentSectionEntries.filter((entry) => entry.category === currentCategory);
 
-  currentOrderedItems = filteredEntries.map((entry) => ratioCache.get(entry.url));
+  currentOrderedItems = filteredEntries
+    .map((entry) => ratioCache.get(entry.url))
+    .filter(Boolean);
+
   renderMosaic(container, currentOrderedItems);
 }
 
@@ -573,7 +602,11 @@ function renderHome(container) {
   container.innerHTML = `
     <section class="home-hero">
       <figure class="home-hero-figure" id="home-hero-trigger">
-        <img src="${SITE_CONFIG.homePhoto}" alt="${SITE_CONFIG.name} — naslovna fotografija" />
+        <img
+          src="${getThumbUrl(SITE_CONFIG.homePhoto, 1200)}"
+          alt="${SITE_CONFIG.name} — naslovna fotografija"
+          decoding="async"
+        />
       </figure>
     </section>
   `;
@@ -605,7 +638,7 @@ function renderPortfolioSection(container, mode) {
     const secondaryPhotos = Array.isArray(item.galleryImages) ? item.galleryImages : [];
     const secondaryHtml = secondaryPhotos.map((imgUrl) => `
       <figure class="project-thumb" data-light-src="${imgUrl}">
-        <img src="${imgUrl}" alt="${item.title || label}" />
+        <img src="${getThumbUrl(imgUrl, 700)}" alt="${item.title || label}" loading="lazy" decoding="async" />
         ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
       </figure>
     `).join("");
@@ -616,7 +649,7 @@ function renderPortfolioSection(container, mode) {
           <div class="project-visuals">
             ${item.mainImage ? `
               <figure class="project-main-photo" data-light-src="${item.mainImage}">
-                <img src="${item.mainImage}" alt="${item.title || label} — završen rad" />
+                <img src="${getThumbUrl(item.mainImage, 1100)}" alt="${item.title || label} — završen rad" loading="lazy" decoding="async" />
                 ${item.hoverText ? `<figcaption class="project-hover-caption">${item.hoverText}</figcaption>` : ""}
               </figure>
             ` : ""}
@@ -690,30 +723,58 @@ function loadDimensionsAndRender(container, entries) {
   }
 
   const shuffledEntries = shuffleArray(entries);
-  const promises = shuffledEntries.map((entry) => {
-    if (ratioCache.has(entry.url)) return Promise.resolve();
+  currentSectionEntries = shuffledEntries;
 
-    return new Promise((resolve) => {
-      const probe = new Image();
-      probe.onload = () => {
-        const w = probe.naturalWidth || 4;
-        const h = probe.naturalHeight || 3;
-        ratioCache.set(entry.url, { url: entry.url, ratio: w / h, naturalWidth: w, naturalHeight: h });
-        resolve();
-      };
-      probe.onerror = () => {
-        ratioCache.set(entry.url, { url: entry.url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
-        resolve();
-      };
-      probe.src = entry.url;
-    });
-  });
+  // Prikaži odmah ono što već imamo u kešu, a za ostale učitaj dimenzije preko male slike
+  const settings = getViewportSettings();
+  let renderedOnce = false;
+  let loadedCount = 0;
 
-  Promise.all(promises).then(() => {
-    currentSectionEntries = shuffledEntries;
-    if (currentSection === "color" || currentSection === "bw") {
+  const maybeRenderProgress = () => {
+    const readyItems = shuffledEntries
+      .map((entry) => ratioCache.get(entry.url))
+      .filter(Boolean);
+
+    if (!readyItems.length) return;
+
+    if (!renderedOnce && (loadedCount >= Math.min(4, shuffledEntries.length) || loadedCount === shuffledEntries.length)) {
+      renderedOnce = true;
+      currentOrderedItems = readyItems;
+      renderMosaic(container, currentOrderedItems);
+    } else if (renderedOnce && loadedCount === shuffledEntries.length) {
       applyCategoryFilter(container);
     }
+  };
+
+  maybeRenderProgress();
+
+  shuffledEntries.forEach((entry) => {
+    if (ratioCache.has(entry.url)) {
+      loadedCount += 1;
+      maybeRenderProgress();
+      return;
+    }
+
+    const probe = new Image();
+    probe.decoding = "async";
+    probe.onload = () => {
+      const w = probe.naturalWidth || 4;
+      const h = probe.naturalHeight || 3;
+      ratioCache.set(entry.url, { url: entry.url, ratio: w / h, naturalWidth: w, naturalHeight: h });
+      loadedCount += 1;
+      if (currentSection === "color" || currentSection === "bw") {
+        maybeRenderProgress();
+      }
+    };
+    probe.onerror = () => {
+      ratioCache.set(entry.url, { url: entry.url, ratio: 4 / 3, naturalWidth: 4, naturalHeight: 3 });
+      loadedCount += 1;
+      if (currentSection === "color" || currentSection === "bw") {
+        maybeRenderProgress();
+      }
+    };
+    // Dimenzije merimo na manjoj slici da telefon ne povuče ceo 5+ MB fajl samo zbog merenja
+    probe.src = getThumbUrl(entry.url, settings.thumbWidth);
   });
 }
 
